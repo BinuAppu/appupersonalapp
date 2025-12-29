@@ -1,0 +1,141 @@
+{
+    "reminders": [
+        {
+            "id": "1a0b5c80-f5cf-4bc7-8b3e-901a3e9d1ad2",
+            "title": "Rem 1",
+            "description": "Desc 1",
+            "date": "2025-12-31",
+            "recurrence": "None",
+            "created_at": "2025-12-29T11:51:21.401880",
+            "comments": [
+                {
+                    "text": "test",
+                    "timestamp": "2025-12-30T00:47:12.805974"
+                },
+                {
+                    "text": "fasfsdf",
+                    "timestamp": "2025-12-30T00:47:43.381445"
+                },
+                {
+                    "text": "dsfsdfsd",
+                    "timestamp": "2025-12-30T00:47:58.430255"
+                }
+            ]
+        },
+        {
+            "id": "b7686761-8492-4138-9522-259cc88bf689",
+            "title": "Future Rem",
+            "description": "2 weeks out\n\ndafddsfa",
+            "date": "2026-01-12",
+            "recurrence": "None",
+            "created_at": "2025-12-29T11:52:58.396424",
+            "comments": []
+        },
+        {
+            "id": "d1973662-d0dc-41cc-b4fe-27921f9c7b2d",
+            "title": "test reminder",
+            "description": "testdddddddd\nasdfasdfsdf\nafsdf",
+            "date": "2026-01-05",
+            "recurrence": "Monthly",
+            "created_at": "2025-12-29T15:49:19.102303",
+            "comments": [
+                {
+                    "text": "hello reminder",
+                    "timestamp": "2025-12-30T00:55:06.322881"
+                }
+            ]
+        },
+        {
+            "id": "8470d36c-5183-4662-81d7-08f1a6f07e9b",
+            "title": "yearly reminder",
+            "description": "",
+            "date": "2026-03-02",
+            "recurrence": "Yearly",
+            "created_at": "2025-12-30T01:48:57.754703",
+            "comments": []
+        }
+    ],
+    "tasks": [
+        {
+            "id": "52e62b17-6abc-41ad-bf24-3bd471571fcd",
+            "title": "Task 1 UpdatedTask 1 Verified",
+            "description": "ddd",
+            "status": "wip",
+            "created_at": "2025-12-29T11:49:09.143015",
+            "comments": [
+                {
+                    "text": "testt",
+                    "timestamp": "2025-12-30T00:47:05.087119"
+                },
+                {
+                    "text": "dsfsd",
+                    "timestamp": "2025-12-30T00:47:24.813645"
+                },
+                {
+                    "text": "sss",
+                    "timestamp": "2025-12-30T00:57:39.981789"
+                }
+            ]
+        },
+        {
+            "id": "9bb0268a-b621-4562-bb75-e2909db8ef04",
+            "title": "Task 2",
+            "description": "Desc 2\ndefinition",
+            "status": "Yet to Start",
+            "created_at": "2025-12-29T11:50:00.427137",
+            "comments": [
+                {
+                    "text": "task 2 comments",
+                    "timestamp": "2025-12-30T00:55:12.590469"
+                }
+            ]
+        },
+        {
+            "id": "1ad34b1a-67d9-4d03-96f5-b4207fb75640",
+            "title": "Task 3",
+            "description": "Desc 3\ndfdfdf\ndddd\nfffff",
+            "status": "Pending",
+            "created_at": "2025-12-29T11:50:00.430504",
+            "comments": [
+                {
+                    "text": "sssss",
+                    "timestamp": "2025-12-30T01:17:51.342895"
+                },
+                {
+                    "text": "dasfdffd",
+                    "timestamp": "2025-12-30T01:18:09.990982"
+                }
+            ]
+        },
+        {
+            "id": "1df7c09b-2c8c-431b-ad2e-2add153e70a7",
+            "title": "Task 4",
+            "description": "Desc 4\nddddd\nnow",
+            "status": "Completed",
+            "created_at": "2025-12-29T11:50:00.433523",
+            "comments": [
+                {
+                    "text": "yes",
+                    "timestamp": "2025-12-30T00:57:21.557719"
+                },
+                {
+                    "text": "test",
+                    "timestamp": "2025-12-30T00:57:24.894704"
+                }
+            ]
+        },
+        {
+            "id": "1e3d1421-3de7-4829-8ca0-5f34f2a24285",
+            "title": "new task",
+            "description": "how are you",
+            "status": "Onhold",
+            "created_at": "2025-12-30T01:08:35.110584",
+            "comments": [
+                {
+                    "text": "asffdsfsda",
+                    "timestamp": "2025-12-30T01:17:48.094963"
+                }
+            ]
+        }
+    ]
+}

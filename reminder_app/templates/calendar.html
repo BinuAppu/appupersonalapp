@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <div>
+        <h1>📅 Calendar View</h1>
+        <p style="color: var(--text-muted);">Visualize your reminders and tasks</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
+        <button class="btn" onclick="openCreateModal('task')">✅ New Task</button>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="calendar-legend">
+    <div class="legend-item">
+        <span class="legend-color" style="background: linear-gradient(135deg, #808191 0%, #5A5A6A 100%);"></span>
+        <span>No Recurrence</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-color" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);"></span>
+        <span>Daily</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-color" style="background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);"></span>
+        <span>Weekly</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-color" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);"></span>
+        <span>Monthly</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-color" style="background: linear-gradient(135deg, #9C27B0 0%, #6A1B9A 100%);"></span>
+        <span>Yearly</span>
+    </div>
+</div>
+
+<div class="calendar-container">
+    <div id='calendar'></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,multiMonthYear'
+            },
+            views: {
+                multiMonthYear: {
+                    type: 'multiMonth',
+                    duration: { years: 1 },
+                    buttonText: 'Year',
+                    multiMonthMaxColumns: 4,
+                    titleFormat: { year: 'numeric', month: 'long' }
+                },
+                timeGridWeek: {
+                    dayHeaderFormat: { weekday: 'short', day: 'numeric', month: 'short' },
+                    slotMinTime: '06:00:00',
+                    slotMaxTime: '24:00:00',
+                    allDaySlot: true
+                },
+                timeGridDay: {
+                    dayHeaderFormat: { weekday: 'long', day: 'numeric', month: 'long' },
+                    slotMinTime: '06:00:00',
+                    slotMaxTime: '24:00:00',
+                    allDaySlot: true
+                }
+            },
+            height: 'auto',
+            contentHeight: 700,
+            events: [
+                {% for rem in reminders %}
+                {% set recurrence_lower = rem.recurrence.lower() %}
+                {% if recurrence_lower == 'none' %}
+                    {% set bg_color = '#5A5A6A' %}
+                    {% set border_color = '#5A5A6A' %}
+                {% elif recurrence_lower == 'daily' %}
+                    {% set bg_color = '#2E7D32' %}
+                    {% set border_color = '#2E7D32' %}
+                {% elif recurrence_lower == 'weekly' %}
+                    {% set bg_color = '#1565C0' %}
+                    {% set border_color = '#1565C0' %}
+                {% elif recurrence_lower == 'monthly' %}
+                    {% set bg_color = '#F57C00' %}
+                    {% set border_color = '#F57C00' %}
+                {% elif recurrence_lower == 'yearly' %}
+                    {% set bg_color = '#6A1B9A' %}
+                    {% set border_color = '#6A1B9A' %}
+                {% else %}
+                    {% set bg_color = '#5A5A6A' %}
+                    {% set border_color = '#5A5A6A' %}
+                {% endif %}
+                {
+                    title: '{{ rem.title }}',
+                    start: '{{ rem.display_date }}',
+                    backgroundColor: '{{ bg_color }}',
+                    borderColor: '{{ border_color }}',
+                    textColor: '#ffffff',
+                    classNames: ['fc-event-recurrence-{{ recurrence_lower }}'],
+                    extendedProps: {
+                        recurrence: '{{ rem.recurrence }}',
+                        description: '{{ rem.description|replace("'", "\\'")|replace("\n", " ") }}'
+                    }
+                },
+                {% endfor %}
+            ],
+            eventDisplay: 'block',
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                meridiem: 'short'
+            },
+            dayMaxEvents: 3,
+            moreLinkClick: 'popover',
+            eventDidMount: function(info) {
+                // Add tooltip with description
+                if (info.event.extendedProps.description) {
+                    info.el.setAttribute('title', info.event.extendedProps.description);
+                }
+            },
+            eventClick: function(info) {
+                // Optional: Show event details in a modal
+                const recurrence = info.event.extendedProps.recurrence || 'None';
+                const description = info.event.extendedProps.description || 'No description';
+                alert('Reminder: ' + info.event.title + '\n\nRecurrence: ' + recurrence + '\n\nDescription: ' + description);
+            }
+        });
+        
+        calendar.render();
+    });
+</script>
+{% endblock %}
