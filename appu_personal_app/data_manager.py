@@ -1,11 +1,16 @@
 import json
 import os
 import uuid
+import base64
 from datetime import datetime, timedelta
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "data.json")
 KB_FILE = os.path.join(BASE_DIR, "knowledgebase.json")
+SECURE_FILE = os.path.join(BASE_DIR, "secure.json")
 
 #DATA_FILE = "data.json"
 
@@ -335,3 +340,133 @@ class DataManager:
         
         results.sort(key=lambda x: x[1], reverse=True)
         return [r[0] for r in results]
+
+    # --- Secure Vault ---
+    
+    def _get_fernet(self, master_key, salt):
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+        )
+        key = base64.urlsafe_b64encode(kdf.derive(master_key.encode()))
+        return Fernet(key)
+
+    def load_secure_data(self):
+        if not os.path.exists(SECURE_FILE):
+            return None
+        with open(SECURE_FILE, 'r') as f:
+            return json.load(f)
+
+    def save_secure_data(self, data):
+        with open(SECURE_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+
+    def init_secure_vault(self, master_key):
+        """Initializes the secure vault with a master key."""
+        if os.path.exists(SECURE_FILE):
+            return False # Already exists
+        
+        salt = os.urandom(16)
+        salt_b64 = base64.b64encode(salt).decode('utf-8')
+        
+        f = self._get_fernet(master_key, salt)
+        # Encrypt a validation token to verify the key later
+        validation_token = f.encrypt(b"VALID").decode('utf-8')
+        
+        data = {
+            "salt": salt_b64,
+            "validation": validation_token,
+            "items": []
+        }
+        self.save_secure_data(data)
+        return True
+
+    def validate_master_key(self, master_key):
+        """Returns the Fernet object if key is valid, else None."""
+        data = self.load_secure_data()
+        if not data:
+            return None
+        
+        try:
+            salt = base64.b64decode(data['salt'])
+            f = self._get_fernet(master_key, salt)
+            decrypted = f.decrypt(data['validation'].encode())
+            if decrypted == b"VALID":
+                return f
+        except Exception:
+            pass
+        return None
+
+    def get_secure_items(self, master_key):
+        f = self.validate_master_key(master_key)
+        if not f:
+            raise ValueError("Invalid Master Key")
+        
+        data = self.load_secure_data()
+        decrypted_items = []
+        for item in data['items']:
+            try:
+                decrypted_items.append({
+                    "id": item["id"],
+                    "title": f.decrypt(item["title"].encode()).decode(),
+                    "user_id": f.decrypt(item["user_id"].encode()).decode(),
+                    "password": f.decrypt(item["password"].encode()).decode(),
+                    "url": f.decrypt(item["url"].encode()).decode(),
+                    "notes": f.decrypt(item["notes"].encode()).decode(),
+                })
+            except Exception:
+                pass # Skip items that fail to decrypt (shouldn't happen if key is valid)
+        return decrypted_items
+
+    def add_secure_item(self, master_key, item_data):
+        f = self.validate_master_key(master_key)
+        if not f:
+            raise ValueError("Invalid Master Key")
+        
+        data = self.load_secure_data()
+        
+        new_item = {
+            "id": str(uuid.uuid4()),
+            "title": f.encrypt(item_data['title'].encode()).decode(),
+            "user_id": f.encrypt(item_data.get('user_id', '').encode()).decode(),
+            "password": f.encrypt(item_data['password'].encode()).decode(),
+            "url": f.encrypt(item_data.get('url', '').encode()).decode(),
+            "notes": f.encrypt(item_data.get('notes', '').encode()).decode(),
+        }
+        
+        data['items'].append(new_item)
+        self.save_secure_data(data)
+        
+        # Return decrypted version for UI
+        item_data['id'] = new_item['id']
+        return item_data
+
+    def update_secure_item(self, master_key, item_id, item_data):
+        f = self.validate_master_key(master_key)
+        if not f:
+            raise ValueError("Invalid Master Key")
+        
+        data = self.load_secure_data()
+        for item in data['items']:
+            if item['id'] == item_id:
+                item["title"] = f.encrypt(item_data['title'].encode()).decode()
+                item["user_id"] = f.encrypt(item_data.get('user_id', '').encode()).decode()
+                item["password"] = f.encrypt(item_data['password'].encode()).decode()
+                item["url"] = f.encrypt(item_data.get('url', '').encode()).decode()
+                item["notes"] = f.encrypt(item_data.get('notes', '').encode()).decode()
+                self.save_secure_data(data)
+                item_data['id'] = item_id
+                return item_data
+        return None
+
+    def delete_secure_item(self, master_key, item_id):
+        f = self.validate_master_key(master_key)
+        if not f:
+            raise ValueError("Invalid Master Key")
+        
+        data = self.load_secure_data()
+        data['items'] = [i for i in data['items'] if i['id'] != item_id]
+        self.save_secure_data(data)
+        return True

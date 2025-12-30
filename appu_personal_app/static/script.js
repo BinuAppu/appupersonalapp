@@ -104,13 +104,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    window.closeModal = function () { 
+    window.closeModal = function () {
         modal.style.display = "none";
         // Reset forms
         document.getElementById('reminderForm')?.reset();
         document.getElementById('taskForm')?.reset();
     }
-    window.closeEditModal = function () { 
+    window.closeEditModal = function () {
         const editModal = document.getElementById('editModal');
         if (editModal) {
             editModal.style.display = "none";
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editRemId) editRemId.value = '';
         if (editTaskId) editTaskId.value = '';
     }
-    window.closeCommentsModal = function () { 
+    window.closeCommentsModal = function () {
         commentsModal.style.display = "none";
         document.getElementById('newCommentInput').value = '';
     }
@@ -257,8 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = document.getElementById('kbId').value;
         const kbDataElement = document.getElementById('kbData');
         // Handle both textarea and contenteditable div
-        const dataContent = kbDataElement.tagName === 'TEXTAREA' 
-            ? kbDataElement.value 
+        const dataContent = kbDataElement.tagName === 'TEXTAREA'
+            ? kbDataElement.value
             : kbDataElement.innerHTML;
         const data = {
             title: document.getElementById('kbTitle').value,
@@ -365,9 +365,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Open Edit Modal Function - Ensure it's always available
     if (typeof window.openEditModal === 'undefined') {
-        window.openEditModal = function() {};
+        window.openEditModal = function () { };
     }
-    
+
     window.openEditModal = function (type, id, title, description, dateOrStatus, recurrence = null) {
         // Ensure function is called
         if (!type || !id) {
@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Ensure modal is closed and reset first
         editModal.style.display = "none";
-        
+
         // Reset and hide both forms
         if (editReminderForm) {
             editReminderForm.reset();
@@ -421,21 +421,21 @@ document.addEventListener('DOMContentLoaded', () => {
             editModalTitle.innerText = 'Edit Reminder';
             editReminderForm.style.display = 'block';
             if (editTaskForm) editTaskForm.style.display = 'none';
-            
+
             // Set form values
             if (editRemId) editRemId.value = String(id || '');
-            
+
             const titleField = document.getElementById('editRemTitle');
             const descField = document.getElementById('editRemDesc');
             const dateField = document.getElementById('editRemDate');
             const recurField = document.getElementById('editRemRecur');
-            
+
             if (titleField) titleField.value = String(title || '').replace(/\\'/g, "'");
             if (descField) descField.value = String(description || '').replace(/\\'/g, "'");
             if (dateField) dateField.value = String(dateOrStatus || '');
             if (recurField) recurField.value = String(recurrence || 'None');
-            
-        // Handle task editing
+
+            // Handle task editing
         } else if (type === 'task') {
             if (!editTaskForm) {
                 console.error('Edit task form not found');
@@ -445,31 +445,31 @@ document.addEventListener('DOMContentLoaded', () => {
             editModalTitle.innerText = 'Edit Task';
             if (editReminderForm) editReminderForm.style.display = 'none';
             editTaskForm.style.display = 'block';
-            
+
             // Set form values
             if (editTaskId) editTaskId.value = String(id || '');
-            
+
             const titleField = document.getElementById('editTaskTitle');
             const descField = document.getElementById('editTaskDesc');
             const statusField = document.getElementById('editTaskStatus');
-            
+
             if (titleField) titleField.value = String(title || '').replace(/\\'/g, "'");
             if (descField) descField.value = String(description || '').replace(/\\'/g, "'");
             if (statusField) statusField.value = String(dateOrStatus || 'Yet to Start');
-            
+
         } else {
             console.error('Invalid edit type:', type);
             return false;
         }
-        
+
         // Show the modal and ensure it's visible
         editModal.style.display = "block";
         editModal.style.visibility = "visible";
         editModal.style.opacity = "1";
-        
+
         // Force a reflow to ensure the display change takes effect
         void editModal.offsetHeight;
-        
+
         return true;
     }
 
@@ -538,14 +538,14 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Invalid reminder ID');
             return;
         }
-        
+
         const data = {
             title: document.getElementById('editRemTitle').value,
             description: document.getElementById('editRemDesc').value,
             date: document.getElementById('editRemDate').value,
             recurrence: document.getElementById('editRemRecur').value
         };
-        
+
         try {
             const res = await fetch(`/api/reminders/${id}`, {
                 method: 'PUT',
@@ -580,13 +580,13 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Invalid task ID');
             return;
         }
-        
+
         const data = {
             title: document.getElementById('editTaskTitle').value,
             description: document.getElementById('editTaskDesc').value,
             status: document.getElementById('editTaskStatus').value
         };
-        
+
         try {
             const res = await fetch(`/api/tasks/${id}`, {
                 method: 'PUT',
@@ -618,18 +618,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle Edit buttons using data attributes
         if (e.target.classList.contains('edit-btn') || e.target.closest('.edit-btn')) {
             const btn = e.target.classList.contains('edit-btn') ? e.target : e.target.closest('.edit-btn');
-            
+
             // Check if button has data attributes (new approach)
             const editType = btn.getAttribute('data-edit-type');
             const editId = btn.getAttribute('data-edit-id');
-            
+
             if (editType && editId) {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 const title = btn.getAttribute('data-edit-title') || '';
                 const description = btn.getAttribute('data-edit-description') || '';
-                
+
                 if (editType === 'task') {
                     const status = btn.getAttribute('data-edit-status') || 'Yet to Start';
                     openEditModal('task', editId, title, description, status);
@@ -640,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-            
+
             // Fallback: Check if button has onclick attribute (old inline handler)
             const onclickAttr = btn.getAttribute('onclick');
             if (onclickAttr && onclickAttr.includes('openEditModal')) {
@@ -648,18 +648,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
         }
-        
+
         // Handle Delete buttons
         if (e.target.classList.contains('delete-btn') || e.target.closest('.delete-btn')) {
             const btn = e.target.classList.contains('delete-btn') ? e.target : e.target.closest('.delete-btn');
             const itemType = btn.getAttribute('data-type');
             const itemId = btn.getAttribute('data-id');
-            
+
             if (!itemId || !itemType) return;
-            
+
             // Prevent event from triggering delete if it's inside an edit button context
             if (btn.closest('.edit-btn')) return;
-            
+
             if (!confirm('Are you sure you want to delete this item?')) return;
 
             let endpoint = '';
@@ -712,10 +712,10 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         const dataElement = document.getElementById('kbResultDetailData');
         if (!dataElement) return;
-        
+
         // Get text content (strip HTML tags for plain text copy)
         const textContent = dataElement.innerText || dataElement.textContent || '';
-        
+
         try {
             // Try modern clipboard API first
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
-                
+
                 // Show feedback
                 const btn = event.target.closest('button') || event.target;
                 const originalText = btn.innerHTML;
@@ -755,5 +755,233 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Failed to copy to clipboard. Please select and copy manually.');
         }
     };
+    // --- Secure Vault Logic ---
+    let currentMasterKey = null;
+
+    window.unlockVault = async function () {
+        const key = document.getElementById('master-key-input').value;
+        if (!key) return;
+
+        // Try validation
+        const res = await fetch('/api/secure/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ master_key: key })
+        });
+        const data = await res.json();
+
+        if (data.valid) {
+            currentMasterKey = key;
+            showVault();
+        } else {
+            // Check if vault needs setup
+            const setupRes = await fetch('/api/secure/init', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ master_key: key })
+            });
+            // Actually, init handles check if exists.
+            // If validation failed, it means key is wrong OR vault empty/new? 
+            // The python Logic: init_secure_vault returns False if exists.
+
+            // Let's refine the UX:
+            // 1. Check if vault exists (we can infer from validation failure + init failure?)
+            // A better way: The UI shows "Setup" button if needed? 
+            // For now, let's keep it simple: If validation fails, show error.
+            document.getElementById('unlock-message').innerText = "Invalid Master Key";
+
+            // Note: If vault is empty/doesn't exist, validate returns invalid (None).
+            // We should try init if user intends to setup.
+            // Let's rely on a separate Setup button for new users in the UI if we detect no vault?
+            // Actually, the easiest way with current API:
+            // Try init. If init success -> Logged in. If init fails (already exists) -> Wrong password.
+
+            const initRes = await fetch('/api/secure/init', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ master_key: key })
+            });
+            const initData = await initRes.json();
+
+            if (initData.success) {
+                currentMasterKey = key;
+                showVault();
+            } else {
+                // Already exists, so keys was definitely wrong
+                document.getElementById('unlock-message').innerText = "Invalid Master Key";
+            }
+        }
+    }
+
+    window.lockVault = function () {
+        currentMasterKey = null;
+        document.getElementById('unlock-screen').style.display = 'flex';
+        document.getElementById('vault-view').style.display = 'none';
+        document.getElementById('master-key-input').value = '';
+        document.getElementById('unlock-message').innerText = '';
+    }
+
+    window.showVault = async function () {
+        document.getElementById('unlock-screen').style.display = 'none';
+        document.getElementById('vault-view').style.display = 'block';
+        loadSecureItems();
+    }
+
+    let secureItemsCache = []; // Cache items for search
+
+    window.loadSecureItems = async function () {
+        const res = await fetch('/api/secure/items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ master_key: currentMasterKey })
+        });
+        if (!res.ok) {
+            lockVault(); // Session expired/invalid
+            return;
+        }
+        secureItemsCache = await res.json();
+        renderSecureTable(secureItemsCache);
+    }
+
+    window.searchSecureItems = function () {
+        const query = document.getElementById('secure-search').value.toLowerCase();
+        const filtered = secureItemsCache.filter(item =>
+            (item.title && item.title.toLowerCase().includes(query)) ||
+            (item.user_id && item.user_id.toLowerCase().includes(query)) ||
+            (item.notes && item.notes.toLowerCase().includes(query))
+        );
+        renderSecureTable(filtered);
+    }
+
+    function renderSecureTable(items) {
+        const list = document.getElementById('secure-items-list');
+        if (items.length === 0) {
+            list.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-secondary); padding: 20px;">No secrets found.</td></tr>';
+        } else {
+            list.innerHTML = items.map(item => `
+                <tr>
+                    <td><div style="font-weight:bold;">${escapeHtml(item.title)}</div></td>
+                    <td>${escapeHtml(item.user_id)}</td>
+                    <td><span class="password-cell">***</span></td>
+                    <td><a href="${item.url}" target="_blank" style="color:var(--accent-color); text-decoration:none;">${escapeHtml(item.url)}</a></td>
+                    <td><div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(item.notes)}">${escapeHtml(item.notes)}</div></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-copy-user" title="Copy Username" onclick="copyToClipboard('${escapeHtml(item.user_id)}')">
+                                <i class="fas fa-user-copy"></i>
+                            </button>
+                            <button class="action-btn btn-copy-pass" title="Copy Password" onclick="copyToClipboard('${escapeHtml(item.password)}')">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            <button class="action-btn btn-edit" title="Edit" onclick="openSecureModal('${item.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn btn-delete" title="Delete" onclick="deleteSecureItem('${item.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    window.copyToClipboard = function (text) {
+        navigator.clipboard.writeText(text).then(() => {
+            // Toast or feedback?
+            alert("Copied to clipboard!");
+        });
+    }
+
+    // Modal
+    window.openSecureModal = function (id = null) {
+        document.getElementById('secure-modal').style.display = 'block';
+        const titleEl = document.getElementById('secure-modal-title');
+
+        let item = { title: '', user_id: '', password: '', url: '', notes: '' };
+
+        if (id) {
+            titleEl.innerText = 'Edit Secret';
+            // Find item in cache
+            item = secureItemsCache.find(i => i.id === id) || item;
+        } else {
+            titleEl.innerText = 'Add Secret';
+        }
+
+        document.getElementById('secure-id').value = id || '';
+        document.getElementById('secure-title').value = item.title;
+        document.getElementById('secure-user-id').value = item.user_id;
+        document.getElementById('secure-password').value = item.password;
+        document.getElementById('secure-url').value = item.url;
+        document.getElementById('secure-notes').value = item.notes;
+    }
+
+    window.closeSecureModal = function () {
+        document.getElementById('secure-modal').style.display = 'none';
+    }
+
+    window.saveSecureItem = async function () {
+        const id = document.getElementById('secure-id').value;
+        const item = {
+            title: document.getElementById('secure-title').value,
+            user_id: document.getElementById('secure-user-id').value,
+            password: document.getElementById('secure-password').value,
+            url: document.getElementById('secure-url').value,
+            notes: document.getElementById('secure-notes').value
+        };
+
+        if (!item.title || !item.password) {
+            alert("Title and Password are required");
+            return;
+        }
+
+        const endpoint = id ? `/api/secure/${id}` : '/api/secure/add';
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(endpoint, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ master_key: currentMasterKey, item: item })
+        });
+
+        if (res.ok) {
+            closeSecureModal();
+            loadSecureItems();
+        } else {
+            alert("Failed to save item");
+        }
+    }
+
+    window.deleteSecureItem = async function (id) {
+        if (!confirm("Are you sure?")) return;
+        const res = await fetch(`/api/secure/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ master_key: currentMasterKey })
+        });
+        if (res.ok) {
+            loadSecureItems();
+        }
+    }
+
+    window.togglePasswordVisibility = function (id) {
+        const el = document.getElementById(id);
+        if (el.type === 'password') {
+            el.type = 'text';
+        } else {
+            el.type = 'password';
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
 });
 

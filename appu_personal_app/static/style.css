@@ -1311,6 +1311,477 @@ textarea:focus {
 }
 
 /* Responsive Calendar */
+/* --- Secure Vault Styles --- */
+.secure-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.unlock-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.unlock-card {
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+}
+
+.unlock-card h2 {
+    margin: 20px 0;
+    color: var(--text-color);
+}
+
+.unlock-card p {
+    color: var(--text-color);
+    margin-bottom: 20px;
+}
+
+.hint-text {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 5px;
+}
+
+.unlock-card .input-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.unlock-card input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 16px;
+    width: 250px;
+}
+
+.unlock-card button {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent-color), #2980b9);
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.unlock-card button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.vault-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.vault-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.vault-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.add-btn,
+.lock-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: white;
+}
+
+.add-btn {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(46, 204, 113, 0.3);
+}
+
+.lock-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.lock-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(231, 76, 60, 0.3);
+}
+
+/* Secure Toolbar */
+.secure-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.search-container {
+    position: relative;
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+.search-container i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.search-container input {
+    width: 100%;
+    padding: 10px 10px 10px 40px;
+    border-radius: 25px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.search-container input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.vault-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* --- Modern Secure Table Styles --- */
+.secure-table-container {
+    overflow-x: auto;
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+}
+
+.secure-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+    /* Ensure table doesn't squish too much */
+}
+
+.secure-table th,
+.secure-table td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.secure-table th {
+    background: var(--bg-color);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.secure-table tr:last-child td {
+    border-bottom: none;
+}
+
+.secure-table tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .secure-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Password Field */
+.password-cell {
+    font-family: monospace;
+    letter-spacing: 2px;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+
+/* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+}
+
+/* General Button Style */
+.action-btn {
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: white;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+/* Specific Colors */
+.btn-copy-user {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    /* Blue */
+}
+
+.btn-copy-user:hover {
+    background: linear-gradient(135deg, #5dade2, #3498db);
+}
+
+.btn-copy-pass {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    /* Purple */
+}
+
+.btn-copy-pass:hover {
+    background: linear-gradient(135deg, #af7ac5, #9b59b6);
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, #f1c40f, #f39c12);
+    /* Orange/Yellow */
+}
+
+.btn-edit:hover {
+    background: linear-gradient(135deg, #f7dc6f, #f1c40f);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    /* Red */
+}
+
+.btn-delete:hover {
+    background: linear-gradient(135deg, #ec7063, #e74c3c);
+}
+
+/* Tooltip for actions */
+.action-btn {
+    position: relative;
+}
+
+.action-btn:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+}
+
+
+.secure-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.secure-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.secure-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.secure-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.secure-card-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.secure-card-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.secure-card-actions i {
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    background: var(--bg-color);
+    padding: 8px;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.secure-card-actions i.fa-edit {
+    color: #3498db;
+}
+
+.secure-card-actions i.fa-edit:hover {
+    background: #3498db;
+    color: white;
+    transform: rotate(15deg);
+}
+
+.secure-card-actions i.fa-trash {
+    color: #e74c3c;
+}
+
+.secure-card-actions i.fa-trash:hover {
+    background: #e74c3c;
+    color: white;
+    transform: scale(1.1);
+}
+
+.secure-card-field {
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+}
+
+.secure-card-field label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.secure-card-field .value {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    word-break: break-all;
+    background: var(--bg-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.secure-card-field .value span,
+.secure-card-field .value a {
+    flex-grow: 1;
+}
+
+.secure-card-field .value i {
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+}
+
+.secure-card-field .value i.fa-copy {
+    color: #f39c12;
+}
+
+.secure-card-field .value i.fa-copy:hover {
+    background: rgba(243, 156, 18, 0.2);
+    transform: scale(1.1);
+}
+
+.secure-card-field .value i.fa-eye,
+.secure-card-field .value i.fa-eye-slash {
+    color: #9b59b6;
+}
+
+.secure-card-field .value i:hover {
+    background: rgba(155, 89, 182, 0.2);
+}
+
+.password-display {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+
+/* Modal specific tweaks */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+    padding-right: 40px;
+}
+
+.password-input-wrapper i {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
 @media (max-width: 768px) {
     .calendar-legend {
         flex-direction: column;

@@ -152,5 +152,73 @@ def delete_kb_item(kb_id):
     success = data_manager.delete_kb_item(kb_id)
     return jsonify({"success": success})
 
+# --- Secure Vault API ---
+
+@app.route('/secure')
+def secure_view():
+    return render_template('secure.html')
+
+@app.route('/api/secure/init', methods=['POST'])
+def init_secure_vault():
+    data = request.json
+    master_key = data.get('master_key')
+    if not master_key:
+        return jsonify({"success": False, "error": "Master Key required"}), 400
+    
+    success = data_manager.init_secure_vault(master_key)
+    if success:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False, "error": "Vault already exists"}), 400
+
+@app.route('/api/secure/validate', methods=['POST'])
+def validate_master_key():
+    data = request.json
+    master_key = data.get('master_key')
+    f = data_manager.validate_master_key(master_key)
+    return jsonify({"valid": f is not None})
+
+@app.route('/api/secure/items', methods=['POST'])
+def get_secure_items():
+    data = request.json
+    master_key = data.get('master_key')
+    try:
+        items = data_manager.get_secure_items(master_key)
+        return jsonify(items)
+    except ValueError:
+        return jsonify({"error": "Invalid Master Key"}), 401
+
+@app.route('/api/secure/add', methods=['POST'])
+def add_secure_item():
+    data = request.json
+    master_key = data.get('master_key')
+    item_data = data.get('item')
+    try:
+        item = data_manager.add_secure_item(master_key, item_data)
+        return jsonify(item)
+    except ValueError:
+        return jsonify({"error": "Invalid Master Key"}), 401
+
+@app.route('/api/secure/<item_id>', methods=['PUT'])
+def update_secure_item(item_id):
+    data = request.json
+    master_key = data.get('master_key')
+    item_data = data.get('item')
+    try:
+        item = data_manager.update_secure_item(master_key, item_id, item_data)
+        return jsonify(item)
+    except ValueError:
+        return jsonify({"error": "Invalid Master Key"}), 401
+
+@app.route('/api/secure/<item_id>', methods=['DELETE']) # Note: DELETE normally doesn't have body, but many clients support it. Safer to use POST for operations needing complex auth if headers aren't used. But we can put master_key in headers or query params? Plan said body. Flask supports body in DELETE.
+def delete_secure_item(item_id):
+    data = request.json
+    master_key = data.get('master_key')
+    try:
+        success = data_manager.delete_secure_item(master_key, item_id)
+        return jsonify({"success": success})
+    except ValueError:
+        return jsonify({"error": "Invalid Master Key"}), 401
+
 if __name__ == '__main__':
     app.run(debug=False, host="0.0.0.0", port=8000)

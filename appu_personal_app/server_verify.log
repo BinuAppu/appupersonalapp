@@ -1,0 +1,15 @@
+ * Serving Flask app 'app'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8000
+ * Running on http://192.168.1.187:8000
+Press CTRL+C to quit
+127.0.0.1 - - [30/Dec/2025 15:38:44] "POST /api/secure/init HTTP/1.1" 200 -
+127.0.0.1 - - [30/Dec/2025 15:38:44] "POST /api/secure/validate HTTP/1.1" 200 -
+127.0.0.1 - - [30/Dec/2025 15:38:44] "POST /api/secure/add HTTP/1.1" 200 -
+127.0.0.1 - - [30/Dec/2025 15:38:44] "POST /api/secure/items HTTP/1.1" 200 -
+127.0.0.1 - - [30/Dec/2025 15:38:44] "PUT /api/secure/85466af3-9e9e-4db7-92fb-3ab01337b522 HTTP/1.1" 200 -
+127.0.0.1 - - [30/Dec/2025 15:38:44] "POST /api/secure/items HTTP/1.1" 200 -
+127.0.0.1 - - [30/Dec/2025 15:38:44] "DELETE /api/secure/85466af3-9e9e-4db7-92fb-3ab01337b522 HTTP/1.1" 200 -
+127.0.0.1 - - [30/Dec/2025 15:38:44] "POST /api/secure/items HTTP/1.1" 200 -
