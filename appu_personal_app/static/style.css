@@ -1799,3 +1799,161 @@ textarea:focus {
         gap: 0.5rem;
     }
 }
+
+/* Secure Tab Enhancements */
+.disclaimer-box {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid #ffc107;
+    border-radius: 8px;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.disclaimer-box p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.disclaimer-box strong {
+    color: #ff9800;
+}
+
+/* Password Generator */
+.password-generator-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+    border: 1px solid var(--border-color);
+    margin-top: 20px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.pg-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 15px 0;
+    gap: 10px;
+}
+
+.pg-controls label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pg-controls input[type=range] {
+    flex: 1;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.pg-output-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    /* Ensure buttons wrap on small screens if needed */
+}
+
+.pg-output-group input {
+    flex: 1;
+    min-width: 150px;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    /* Make input match height of buttons */
+    height: 40px;
+    padding: 0;
+}
+
+/* Unique Button Styles for Password Generator */
+.pg-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 0 16px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 40px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.btn-copy {
+    background: rgba(108, 93, 211, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(108, 93, 211, 0.2);
+}
+
+.btn-copy:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 93, 211, 0.3);
+}
+
+.btn-gen {
+    background: var(--accent-color);
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-gen:hover {
+    background: #ff4081;
+    /* Slightly lighter accent */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 64, 129, 0.4);
+}
+
+.icon-btn {
+    /* Keeping generic class just in case used elsewhere, but redefining slightly less aggressive */
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.input-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.input-group-vertical input {
+    text-align: center;
+}
+
+.unlock-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    padding: 20px;
+}
+
+.unlock-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 2.5rem;
+    /* More spacing */
+}

@@ -156,7 +156,8 @@ def delete_kb_item(kb_id):
 
 @app.route('/secure')
 def secure_view():
-    return render_template('secure.html')
+    vault_initialized = data_manager.is_secure_vault_initialized()
+    return render_template('secure.html', vault_initialized=vault_initialized)
 
 @app.route('/api/secure/init', methods=['POST'])
 def init_secure_vault():

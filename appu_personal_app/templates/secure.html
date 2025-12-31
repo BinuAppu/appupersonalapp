@@ -5,14 +5,51 @@
     <div id="unlock-screen" class="unlock-screen">
         <div class="unlock-card">
             <i class="fas fa-lock fa-3x"></i>
-            <h2>Secure Vault</h2>
-            <p>Enter your Master Key to access your secrets. <br><span class="hint-text">If this is your first time,
-                    enter a password to create a new vault.</span></p>
+            {% if vault_initialized %}
+            <h2>Unlock Vault</h2>
+            <p>Enter your Master Key to access your secrets.</p>
             <div class="input-group">
                 <input type="password" id="master-key-input" placeholder="Master Key">
                 <button onclick="unlockVault()">Unlock</button>
             </div>
+            {% else %}
+            <h2>Setup Secure Vault</h2>
+            <p>Create a Master Key to protect your secrets.</p>
+            <div class="input-group-vertical">
+                <input type="password" id="new-master-key" placeholder="New Master Key">
+                <input type="password" id="confirm-master-key" placeholder="Confirm Master Key">
+                <button onclick="createVault()">Create Vault</button>
+            </div>
+            {% endif %}
+
             <p id="unlock-message" class="error-message"></p>
+
+            <div class="disclaimer-box">
+                <p><strong><i class="fas fa-exclamation-triangle"></i> Disclaimer:</strong> If you forget your Master
+                    Password, there is <strong>NO WAY</strong> to recover your encrypted data.
+                    {% if not vault_initialized %}
+                    Since no vault exists, you can set a new password now.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="password-generator-card">
+            <h3><i class="fas fa-key"></i> Password Generator</h3>
+            <div class="pg-controls">
+                <label>Length: <span id="pg-length-val">12</span></label>
+                <input type="range" id="pg-length" min="10" max="30" value="12"
+                    oninput="document.getElementById('pg-length-val').innerText = this.value">
+            </div>
+            <div class="pg-output-group">
+                <input type="text" id="pg-output" readonly placeholder="Generated Password">
+                <button class="pg-btn btn-copy" onclick="copyGeneratedPassword()" title="Copy to Clipboard">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button class="pg-btn btn-gen" onclick="generatePassword()" title="Generate">
+                    <i class="fas fa-sync-alt"></i> Generate
+                </button>
+            </div>
         </div>
     </div>
 

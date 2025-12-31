@@ -774,51 +774,51 @@ document.addEventListener('DOMContentLoaded', () => {
             currentMasterKey = key;
             showVault();
         } else {
-            // Check if vault needs setup
-            const setupRes = await fetch('/api/secure/init', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ master_key: key })
-            });
-            // Actually, init handles check if exists.
-            // If validation failed, it means key is wrong OR vault empty/new? 
-            // The python Logic: init_secure_vault returns False if exists.
+            const msgObj = document.getElementById('unlock-message');
+            msgObj.innerText = "Invalid Master Key";
+            msgObj.style.color = "red";
+        }
+    }
 
-            // Let's refine the UX:
-            // 1. Check if vault exists (we can infer from validation failure + init failure?)
-            // A better way: The UI shows "Setup" button if needed? 
-            // For now, let's keep it simple: If validation fails, show error.
-            document.getElementById('unlock-message').innerText = "Invalid Master Key";
+    window.createVault = async function () {
+        const key = document.getElementById('new-master-key').value;
+        const confirmKey = document.getElementById('confirm-master-key').value;
+        const msg = document.getElementById('unlock-message');
 
-            // Note: If vault is empty/doesn't exist, validate returns invalid (None).
-            // We should try init if user intends to setup.
-            // Let's rely on a separate Setup button for new users in the UI if we detect no vault?
-            // Actually, the easiest way with current API:
-            // Try init. If init success -> Logged in. If init fails (already exists) -> Wrong password.
+        if (!key || !confirmKey) {
+            msg.innerText = "Please fill in all fields.";
+            return;
+        }
 
-            const initRes = await fetch('/api/secure/init', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ master_key: key })
-            });
-            const initData = await initRes.json();
+        if (key !== confirmKey) {
+            msg.innerText = "Passwords do not match.";
+            return;
+        }
 
-            if (initData.success) {
-                currentMasterKey = key;
-                showVault();
-            } else {
-                // Already exists, so keys was definitely wrong
-                document.getElementById('unlock-message').innerText = "Invalid Master Key";
-            }
+        if (key.length < 4) {
+            msg.innerText = "Password is too short.";
+            return;
+        }
+
+        const res = await fetch('/api/secure/init', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ master_key: key })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            currentMasterKey = key;
+            showVault();
+        } else {
+            msg.innerText = data.error || "Failed to create vault.";
         }
     }
 
     window.lockVault = function () {
         currentMasterKey = null;
-        document.getElementById('unlock-screen').style.display = 'flex';
-        document.getElementById('vault-view').style.display = 'none';
-        document.getElementById('master-key-input').value = '';
-        document.getElementById('unlock-message').innerText = '';
+        // Reload page to reset state
+        location.reload();
     }
 
     window.showVault = async function () {
@@ -887,9 +887,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.copyToClipboard = function (text) {
+        if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
-            // Toast or feedback?
-            alert("Copied to clipboard!");
+            const el = document.createElement('div');
+            el.innerText = "Copied!";
+            el.style.position = 'fixed';
+            el.style.bottom = '20px';
+            el.style.left = '50%';
+            el.style.transform = 'translateX(-50%)';
+            el.style.background = 'rgba(0,0,0,0.7)';
+            el.style.color = 'white';
+            el.style.padding = '10px 20px';
+            el.style.borderRadius = '5px';
+            el.style.zIndex = '9999';
+            document.body.appendChild(el);
+            setTimeout(() => document.body.removeChild(el), 1500);
         });
     }
 
@@ -983,5 +995,91 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, "&#039;");
     }
 
-});
+    // --- Password Generator Logic ---
+    window.generatePassword = function () {
+        const length = document.getElementById('pg-length').value;
+        const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@$-[]:";
+        let password = "";
+        const array = new Uint32Array(length);
+        window.crypto.getRandomValues(array);
 
+        for (let i = 0; i < length; i++) {
+            password += charset[array[i] % charset.length];
+        }
+
+        document.getElementById('pg-output').value = password;
+    }
+
+    window.copyGeneratedPassword = function () {
+        const pw = document.getElementById('pg-output').value;
+        if (pw) {
+            window.copyToClipboard(pw);
+        }
+    }
+
+    // Initialize logic if elements exist
+    if (document.getElementById('pg-length')) {
+        document.getElementById('pg-length').addEventListener('input', function () {
+            document.getElementById('pg-length-val').innerText = this.value;
+        });
+    }
+    window.copyToClipboard = function (text) {
+        if (!text) return;
+
+        // Try modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyFeedback();
+            }).catch(err => {
+                console.error('Clipboard write failed:', err);
+                fallbackCopy(text);
+            });
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed'; // Avoid scrolling to bottom
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) showCopyFeedback();
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            alert('Failed to copy. Please copy manually.');
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function showCopyFeedback() {
+        const el = document.createElement('div');
+        el.innerText = "Copied!";
+        el.style.position = 'fixed';
+        el.style.bottom = '20px';
+        el.style.left = '50%';
+        el.style.transform = 'translateX(-50%)';
+        el.style.background = 'rgba(0,0,0,0.8)';
+        el.style.color = 'white';
+        el.style.padding = '10px 20px';
+        el.style.borderRadius = '20px'; // More rounded
+        el.style.zIndex = '9999';
+        el.style.fontSize = '0.9rem';
+        el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+        el.style.animation = 'fadeIn 0.3s ease-out';
+
+        document.body.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => document.body.removeChild(el), 300);
+        }, 1500);
+    }
+});

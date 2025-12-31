@@ -363,9 +363,12 @@ class DataManager:
         with open(SECURE_FILE, 'w') as f:
             json.dump(data, f, indent=4)
 
+    def is_secure_vault_initialized(self):
+        return os.path.exists(SECURE_FILE)
+
     def init_secure_vault(self, master_key):
         """Initializes the secure vault with a master key."""
-        if os.path.exists(SECURE_FILE):
+        if self.is_secure_vault_initialized():
             return False # Already exists
         
         salt = os.urandom(16)
