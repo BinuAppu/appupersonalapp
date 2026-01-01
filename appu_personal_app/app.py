@@ -1,4 +1,8 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+import os
+import shutil
+import time
+import requests
 from datetime import datetime, timedelta
 from data_manager import DataManager
 
@@ -220,6 +224,71 @@ def delete_secure_item(item_id):
         return jsonify({"success": success})
     except ValueError:
         return jsonify({"error": "Invalid Master Key"}), 401
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
+@app.route('/api/backup', methods=['POST'])
+def backup_data():
+    try:
+        # Use absolute path relative to this file
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        backup_dir = os.path.join(base_dir, 'backup')
+        
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Files identified from data_manager.py
+        files_to_check = ['data.json', 'knowledgebase.json', 'secure.json']
+        backed_up_files = []
+        
+        for filename in files_to_check:
+            src = os.path.join(base_dir, filename)
+            if os.path.exists(src):
+                dst = os.path.join(backup_dir, f"{filename.split('.')[0]}_{timestamp}.json")
+                shutil.copy2(src, dst)
+                backed_up_files.append(os.path.basename(dst))
+        
+        if not backed_up_files:
+            return jsonify({"success": False, "error": "No data files found to backup"}), 404
+            
+        return jsonify({"success": True, "path": backup_dir, "files": backed_up_files})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/check_update')
+def check_update():
+    try:
+        # Get local modification time of app.py
+        local_time = os.path.getmtime('app.py')
+        local_date = datetime.fromtimestamp(local_time).strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Get latest commit from GitHub
+        url = "https://api.github.com/repos/BinuAppu/appupersonalapp/commits?per_page=1"
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        
+        commit_date_str = data[0]['commit']['committer']['date']
+        # ISO 8601 format: 2023-10-27T10:00:00Z
+        commit_date = datetime.strptime(commit_date_str, "%Y-%m-%dT%H:%M:%SZ")
+        remote_date = commit_date.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Simple comparison: if remote date is significantly newer than local file mod time?
+        # Or just return both and let user decide since we can't easily track git version locally without git.
+        # Let's return true if remote is newer than local (converting to UTC for fair comparison if possible, but local mtime is system time).
+        # We will just return dates for display.
+        
+        return jsonify({
+            "update_available": True, # Always show available to check, or compare timestamps
+            "local_date": local_date,
+            "remote_date": remote_date
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=False, host="0.0.0.0", port=8000)

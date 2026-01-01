@@ -3,14 +3,60 @@ document.addEventListener('DOMContentLoaded', () => {
     window.setTheme = function (theme) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
-        const radio = document.getElementById(theme + 'Theme');
-        const radioS = document.getElementById(theme + 'Themes');
-        if (radio) radio.checked = true;
-        if (radioS) radioS.checked = true;
+
+        // Update Settings Page Inputs if they exist
+        const lightRadio = document.getElementById('settingsLightTheme');
+        const darkRadio = document.getElementById('settingsDarkTheme');
+        const schemeSelect = document.getElementById('colorSchemeSelect');
+
+        if (lightRadio && darkRadio) {
+            if (theme === 'light') lightRadio.checked = true;
+            else if (theme === 'dark') darkRadio.checked = true;
+            else {
+                // If custom theme, uncheck both or keep as is? 
+                // Unchecking both is cleaner to show "neither light nor dark standard" is active
+                lightRadio.checked = false;
+                darkRadio.checked = false;
+            }
+        }
+
+        if (schemeSelect) {
+            const validThemes = [
+                'hackthebox', 'dracula', 'ocean',
+                'solarized-light', 'solarized-dark',
+                'monokai', 'nord',
+                'gruvbox-light', 'gruvbox-dark',
+                'cyberpunk', 'forest', 'sunset', 'midnight'
+            ];
+            if (validThemes.includes(theme)) {
+                schemeSelect.value = theme;
+            } else {
+                schemeSelect.value = 'default';
+            }
+        }
     }
 
+    window.changeColorScheme = function (scheme) {
+        if (scheme === 'default') {
+            setTheme('light'); // Default fallback
+        } else {
+            setTheme(scheme);
+        }
+    }
+
+    window.changeFontFamily = function (font) {
+        document.body.style.fontFamily = font;
+        localStorage.setItem('fontFamily', font);
+    }
+
+    // Init Theme and Font
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
+
+    const savedFont = localStorage.getItem('fontFamily');
+    if (savedFont) {
+        document.body.style.fontFamily = savedFont;
+    }
 
     // Modal Logic
     const modal = document.getElementById("createModal");

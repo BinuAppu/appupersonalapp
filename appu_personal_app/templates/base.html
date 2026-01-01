@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Appu's Personal App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&family=Merriweather:wght@300;400;700&family=Montserrat:wght@400;500;600&family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@400;600&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Raleway:wght@400;500;600&family=Roboto:wght@400;500;700&family=Source+Code+Pro:wght@400;600&family=Ubuntu:wght@400;500;700&family=Work+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <!-- FullCalendar CSS -->
     <!-- FullCalendar CSS (Styles injected by v6 JS) -->
@@ -32,21 +34,11 @@
             <a href="/all" class="nav-link {% if request.path == '/all' %}active{% endif %}">
                 <span>📝</span> Data Base
             </a>
+            <a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">
+                <span>⚙️</span> Settings
+            </a>
         </nav>
 
-        <div class="theme-toggle">
-            <p>Appearance</p>
-            <div class="toggle-group">
-                <label>
-                    <input type="radio" name="theme" id="lightTheme" value="light" onchange="setTheme('light')">
-                    <span>☀️ Light</span>
-                </label>
-                <label>
-                    <input type="radio" name="theme" id="darkTheme" value="dark" onchange="setTheme('dark')">
-                    <span>🌙 Dark</span>
-                </label>
-            </div>
-        </div>
     </div>
 
     <div class="main-content">
