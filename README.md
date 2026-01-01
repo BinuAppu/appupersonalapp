@@ -11,3 +11,14 @@ python3 app.py
 ```
 py app.py
 ```
+
+Install required Modules
+```
+Windows :
+  py -m pip install flask
+  py -m pip install cryptography
+
+Linux :
+  python3 -m pip install flask
+  python3 -m pip install cryptography
+```
