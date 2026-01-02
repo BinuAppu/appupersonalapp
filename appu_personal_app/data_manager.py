@@ -11,8 +11,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "data.json")
 KB_FILE = os.path.join(BASE_DIR, "knowledgebase.json")
 SECURE_FILE = os.path.join(BASE_DIR, "secure.json")
-
-#DATA_FILE = "data.json"
+USERNAME_FILE = os.path.join(BASE_DIR, "username.json")
 
 class DataManager:
     def __init__(self, data_file=DATA_FILE):
@@ -29,6 +28,20 @@ class DataManager:
                     self.data = json.load(f)
             except (json.JSONDecodeError, IOError):
                 self.data = {"reminders": [], "tasks": []}
+
+    def get_user_name(self):
+        if not os.path.exists(USERNAME_FILE):
+            return "Appu"
+        try:
+            with open(USERNAME_FILE, 'r') as f:
+                data = json.load(f)
+                return data.get("user_name", "Appu")
+        except (json.JSONDecodeError, IOError):
+            return "Appu"
+
+    def set_user_name(self, name):
+        with open(USERNAME_FILE, 'w') as f:
+            json.dump({"user_name": name}, f, indent=4)
 
     def save_data(self):
         with open(self.data_file, 'w') as f:

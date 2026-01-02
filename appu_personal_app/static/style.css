@@ -8,9 +8,9 @@
     --text-muted: #808191;
     --card-bg: rgba(255, 255, 255, 0.8);
     --nav-bg: #FFFFFF;
-    --sidebar-width: 250px;
-    --box-shadow: 0px 10px 40px rgba(226, 236, 249, 0.5);
-    --border-radius: 20px;
+    --sidebar-width: 200px;
+    --box-shadow: 0px 5px 20px rgba(226, 236, 249, 0.5);
+    --border-radius: 12px;
     --border-color: rgba(255, 255, 255, 0.5);
     --input-bg: #FCFCFD;
     --input-border: #E4E4E4;
@@ -252,7 +252,7 @@ body {
 .sidebar {
     width: var(--sidebar-width);
     background-color: var(--nav-bg);
-    padding: 2rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
@@ -260,10 +260,10 @@ body {
 }
 
 .logo {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--primary-color);
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -272,8 +272,8 @@ body {
 .nav-link {
     text-decoration: none;
     color: var(--text-muted);
-    padding: 1rem;
-    border-radius: 12px;
+    padding: 0.75rem;
+    border-radius: 10px;
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -343,7 +343,7 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    padding: 2rem;
+    padding: 1rem;
     overflow-y: auto;
     background: var(--bg-color);
     /* Simplified for better theme transitions */
@@ -367,7 +367,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     position: relative;
     z-index: 1;
 }
@@ -383,9 +383,9 @@ h3 {
     background: var(--card-bg);
     backdrop-filter: blur(10px);
     border-radius: var(--border-radius);
-    padding: 1.5rem;
+    padding: 1rem;
     box-shadow: var(--box-shadow);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     border: 1px solid var(--border-color);
     position: relative;
     z-index: 1;
@@ -461,8 +461,8 @@ textarea:focus {
 .task-list,
 .reminder-list {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
 }
 
 @media (max-width: 1200px) {
@@ -495,7 +495,7 @@ textarea:focus {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 80px;
+    min-height: 60px;
 }
 
 .item-card:hover {

@@ -3,7 +3,7 @@
 {% block content %}
 <div class="header">
     <div>
-        <h1>Welcome Back - Appu 👋</h1>
+        <h1>Welcome Back - {{ user_name }} 👋</h1>
         <p style="color: var(--text-muted);">Here's what's happening today.</p>
     </div>
     <div style="display: flex; align-items: center; gap: 20px;">
@@ -14,8 +14,8 @@
             <input type="range" id="timeframeSlider" min="1" max="12" value="6" style="width: 150px; margin-top: 5px;">
         </div>
         <div style="display: flex; gap: 10px;">
-            <button class="btn btn-secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
             <button class="btn" onclick="openCreateModal('task')">✅ New Task</button>
+            <button class="btn btn-secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
             <button class="btn btn-secondary" style="background-color: var(--accent-color);" onclick="openKBModal()">🧠
                 New KB Item</button>
         </div>

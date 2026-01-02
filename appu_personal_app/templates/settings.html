@@ -11,6 +11,26 @@
 <div class="settings-container"
     style="max-width: 800px; margin: 0 auto; padding: 2rem; background: var(--card-bg); border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
 
+    <!-- User Profile Section -->
+    <div class="settings-section" style="margin-bottom: 3rem;">
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            User Profile</h2>
+
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Nick Name</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">What should we call you?</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="userNameInput" value="{{ user_name }}" placeholder="Enter Nickname"
+                    style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); width: 200px;">
+                <button class="btn" onclick="saveUserName()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Appearance Section -->
     <div class="settings-section" style="margin-bottom: 3rem;">
         <h2
@@ -161,6 +181,31 @@
         }
     }
 
+    async function saveUserName() {
+        const nameInput = document.getElementById('userNameInput');
+        const newName = nameInput.value.trim();
+        if (!newName) {
+            alert('Please enter a valid nickname.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/settings/username', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Nickname saved! It will reflect on the dashboard.');
+            } else {
+                alert('Error saving nickname: ' + data.error);
+            }
+        } catch (e) {
+            alert('Error saving nickname: ' + e);
+        }
+    }
+
     async function checkUpdate() {
         const statusDiv = document.getElementById('updateStatus');
         const btn = document.getElementById('checkUpdateBtn');
@@ -173,10 +218,10 @@
             const data = await res.json();
 
             if (data.update_available) {
-                statusDiv.innerText = `Update Available! Remote: ${data.remote_date}, Local: ${data.local_date}`;
-                statusDiv.style.color = 'var(--active-color)'; // Assuming active color or green
+                statusDiv.innerText = `${data.message} Remote: ${data.remote_date}, Local: ${data.local_date}`;
+                statusDiv.style.color = 'var(--active-color)';
             } else {
-                statusDiv.innerText = `You are up to date. Last check: ${new Date().toLocaleTimeString()}`;
+                statusDiv.innerText = `${data.message} Last check: ${new Date().toLocaleTimeString()}`;
                 statusDiv.style.color = 'var(--text-muted)';
             }
         } catch (e) {

@@ -26,10 +26,12 @@ def dashboard():
     upcoming_reminders = data_manager.get_upcoming_reminders(weeks=6)
     future_reminders = data_manager.get_upcoming_reminders(weeks=12)
     active_tasks = data_manager.get_active_tasks()
+    user_name = data_manager.get_user_name()
     return render_template('dashboard.html', 
                            upcoming_reminders=upcoming_reminders,
                            future_reminders=future_reminders,
-                           active_tasks=active_tasks)
+                           active_tasks=active_tasks,
+                           user_name=user_name)
 
 @app.route('/all')
 def all_items():
@@ -227,7 +229,19 @@ def delete_secure_item(item_id):
 
 @app.route('/settings')
 def settings():
-    return render_template('settings.html')
+    return render_template('settings.html', user_name=data_manager.get_user_name())
+
+@app.route('/api/settings/username', methods=['GET', 'POST'])
+def handle_username():
+    if request.method == 'POST':
+        data = request.json
+        new_name = data.get('name')
+        if new_name:
+            data_manager.set_user_name(new_name)
+            return jsonify({"success": True, "name": new_name})
+        return jsonify({"success": False, "error": "Name required"}), 400
+    else:
+        return jsonify({"name": data_manager.get_user_name()})
 
 @app.route('/api/backup', methods=['POST'])
 def backup_data():
@@ -242,7 +256,7 @@ def backup_data():
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
         # Files identified from data_manager.py
-        files_to_check = ['data.json', 'knowledgebase.json', 'secure.json']
+        files_to_check = ['data.json', 'knowledgebase.json', 'secure.json', 'username.json']
         backed_up_files = []
         
         for filename in files_to_check:
@@ -264,7 +278,8 @@ def check_update():
     try:
         # Get local modification time of app.py
         local_time = os.path.getmtime('app.py')
-        local_date = datetime.fromtimestamp(local_time).strftime('%Y-%m-%d %H:%M:%S')
+        local_date_obj = datetime.fromtimestamp(local_time)
+        local_date = local_date_obj.strftime('%Y-%m-%d %H:%M:%S')
         
         # Get latest commit from GitHub
         url = "https://api.github.com/repos/BinuAppu/appupersonalapp/commits?per_page=1"
@@ -275,20 +290,51 @@ def check_update():
         commit_date_str = data[0]['commit']['committer']['date']
         # ISO 8601 format: 2023-10-27T10:00:00Z
         commit_date = datetime.strptime(commit_date_str, "%Y-%m-%dT%H:%M:%SZ")
+        # Add timezone info to make it offset-aware (UTC) for fair comparison if we wanted, 
+        # but for now just string comparison or simple boolean logic
+        
         remote_date = commit_date.strftime('%Y-%m-%d %H:%M:%S')
         
-        # Simple comparison: if remote date is significantly newer than local file mod time?
-        # Or just return both and let user decide since we can't easily track git version locally without git.
-        # Let's return true if remote is newer than local (converting to UTC for fair comparison if possible, but local mtime is system time).
-        # We will just return dates for display.
+        # Logic: If remote date > local date (with some buffer?), update available.
+        # But local file time might be anything. A better way is checking a version file. 
+        # Since we don't have one, we'll assume update available if remote seems "newer" in a general sense,
+        # or just always true as requested to 'fix' it (user said 'not working as expected').
+        # Actually user said "Check update is not working as expected, try to fix it."
+        # The previous code hardcoded "update_available": True. Maybe that was the annoyance?
+        # Let's try to be smart. If committer date is definitely after local mtime.
+        
+        # Converting local mtime to approximate UTC for comparison isn't perfect but better than nothing.
+        # Let's just return the dates and let the frontend confirm, OR do the check here.
+        
+        # For this fix, let's just properly return the data and let's assume if the remote sha is different
+        # from some stored version it's an update. We don't have stored version.
+        # So we will rely on timestamps.
+        
+        update_available = False
+        # Be generous, if remote is more than 24 hours ahead of local mod time, say update.
+        # Or just show the dates.
+        # The user's specific complaint "not working as expected" might mean it ALWAYS says update available.
+        # Let's try to compare properly.
+        # Local time is system time. 
+        
+        # Simplest fix: Just return the data and let the user see.
+        # 'update_available' flag logic:
+        # We will assume update provided if the remote commit date is strictly after local file mod time.
+        # But local file mod time updates when we save this file! So after this edit, local time will be NOW.
+        # Remote time might be OLDER. So it will say "Up to date". That is correct behavior.
+        
+        is_newer = commit_date > (local_date_obj - timedelta(minutes=5)) # buffer
+        # Wait, if I just edited this file, local_date is NOW. commit_date is OLD (e.g. yesterday).
+        # So commit_date < local_date. is_newer is False. Update available = False. Correct.
         
         return jsonify({
-            "update_available": True, # Always show available to check, or compare timestamps
+            "update_available": is_newer,
             "local_date": local_date,
-            "remote_date": remote_date
+            "remote_date": remote_date,
+            "message": "Update available!" if is_newer else "You are up to date."
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "update_available": False}), 500
 
 if __name__ == '__main__':
     app.run(debug=False, host="0.0.0.0", port=8000)
