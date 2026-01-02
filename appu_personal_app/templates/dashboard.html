@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <div>
+        <h1>Welcome Back - {{ user_name }} 👋</h1>
+        <p style="color: var(--text-muted);">Here's what's happening today.</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+            <label for="timeframeSlider"
+                style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Timeframe: <span
+                    id="timeframeValue">6</span> Week(s)</label>
+            <input type="range" id="timeframeSlider" min="1" max="12" value="6" style="width: 150px; margin-top: 5px;">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="openCreateModal('task')">✅ New Task</button>
+            <button class="btn btn-secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
+            <button class="btn btn-secondary" style="background-color: var(--accent-color);" onclick="openKBModal()">🧠
+                New KB Item</button>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Active Tasks Top -->
+    <div class="section-container">
+        <div class="section-header">
+            <h3>✅ Active Tasks</h3>
+        </div>
+        <div class="task-list">
+            {% if active_tasks %}
+            {% for task in active_tasks %}
+            <div class="item-card" onclick="viewComments('task', '{{ task.id }}', '{{ task.title }}')">
+                <div class="item-card-header">
+                    <div>
+                        <h4 class="item-card-title">{{ task.title }}</h4>
+                        <div class="item-card-meta">
+                            <span class="status-badge status-{{ task.status.lower().replace(' ', '') }}">{{ task.status
+                                }}</span>
+                        </div>
+                    </div>
+                    <span class="delete-icon delete-btn" data-type="tasks" data-id="{{ task.id }}"
+                        onclick="event.stopPropagation()">🗑️</span>
+                </div>
+
+                {% if task.comments %}
+                <div class="latest-comment-preview">
+                    {{ task.comments[-1].timestamp|short_date }} "{{ task.comments[-1].text }}"
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="text-align:center; color: var(--text-muted);">No active tasks.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upcoming Reminders Bottom -->
+    <div class="section-container">
+        <div class="section-header">
+            <h3>🔔 Upcoming Reminders</h3>
+        </div>
+        <div class="reminder-list">
+            {% if upcoming_reminders %}
+            {% for rem in upcoming_reminders %}
+            <div class="item-card recur-{{ rem.recurrence.lower() }}"
+                onclick="viewComments('reminder', '{{ rem.id }}', '{{ rem.title|replace("'", "\\'") }}')">
+                <div class="item-card-header">
+                    <div>
+                        <h4 class="item-card-title">{{ rem.title }}</h4>
+                        <div class="item-card-meta">{{ rem.display_date }} • {{ rem.recurrence }}</div>
+                    </div>
+                    <span class="delete-icon delete-btn" data-type="reminders" data-id="{{ rem.id }}"
+                        onclick="event.stopPropagation()">🗑️</span>
+                </div>
+
+                {% if rem.comments %}
+                <div class="latest-comment-preview">
+                    {{ rem.comments[-1].timestamp|short_date }} "{{ rem.comments[-1].text }}"
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="text-align:center; color: var(--text-muted);">No upcoming reminders.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

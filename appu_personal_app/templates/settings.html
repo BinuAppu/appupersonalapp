@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <div>
+        <h1>Settings ⚙️</h1>
+        <p style="color: var(--text-muted);">Manage your application preferences and data.</p>
+    </div>
+</div>
+
+<div class="settings-container"
+    style="max-width: 800px; margin: 0 auto; padding: 2rem; background: var(--card-bg); border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+
+    <!-- User Profile Section -->
+    <div class="settings-section" style="margin-bottom: 3rem;">
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            User Profile</h2>
+
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Nick Name</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">What should we call you?</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="userNameInput" value="{{ user_name }}" placeholder="Enter Nickname"
+                    style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); width: 200px;">
+                <button class="btn" onclick="saveUserName()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appearance Section -->
+    <div class="settings-section" style="margin-bottom: 3rem;">
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            Appearance</h2>
+
+        <!-- Theme Toggle -->
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Theme</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Switch between light and dark modes.
+                </p>
+            </div>
+            <div class="toggle-group">
+                <label>
+                    <input type="radio" name="settingsTheme" id="settingsLightTheme" value="light"
+                        onchange="setTheme('light')">
+                    <span style="font-size: 1.2rem; cursor: pointer;">☀️</span>
+                </label>
+                <label>
+                    <input type="radio" name="settingsTheme" id="settingsDarkTheme" value="dark"
+                        onchange="setTheme('dark')">
+                    <span style="font-size: 1.2rem; cursor: pointer;">🌙</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Color Scheme -->
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Color Scheme</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Choose a vibrant color palette.</p>
+            </div>
+            <select id="colorSchemeSelect" onchange="changeColorScheme(this.value)"
+                style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <option value="default">Default (Purple/Pink)</option>
+                <option value="hackthebox">Hackthebox (Green/Black)</option>
+                <option value="dracula">Dracula (Purple/Dark)</option>
+                <option value="ocean">Ocean (Blue/Teal)</option>
+                <option value="solarized-light">Solarized Light</option>
+                <option value="solarized-dark">Solarized Dark</option>
+                <option value="monokai">Monokai</option>
+                <option value="nord">Nord</option>
+                <option value="gruvbox-light">Gruvbox Light</option>
+                <option value="gruvbox-dark">Gruvbox Dark</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="forest">Forest</option>
+                <option value="sunset">Sunset</option>
+                <option value="midnight">Midnight</option>
+            </select>
+        </div>
+
+        <!-- Font Family -->
+        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Font Family</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Select your preferred typography.</p>
+            </div>
+            <select id="fontFamilySelect" onchange="changeFontFamily(this.value)"
+                style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                <option value="'Inter', sans-serif">Inter (Default)</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Open Sans', sans-serif">Open Sans</option>
+                <option value="'Lato', sans-serif">Lato</option>
+                <option value="'Poppins', sans-serif">Poppins</option>
+                <option value="'Montserrat', sans-serif">Montserrat</option>
+                <option value="'Ubuntu', sans-serif">Ubuntu</option>
+                <option value="'Playfair Display', serif">Playfair Display</option>
+                <option value="'Merriweather', serif">Merriweather</option>
+                <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                <option value="'Nunito', sans-serif">Nunito</option>
+                <option value="'Raleway', sans-serif">Raleway</option>
+                <option value="'Quicksand', sans-serif">Quicksand</option>
+                <option value="'Inconsolata', monospace">Inconsolata</option>
+                <option value="'Work Sans', sans-serif">Work Sans</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Data Management Section -->
+    <div class="settings-section" style="margin-bottom: 3rem;">
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            Data Management</h2>
+
+        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Backup Data</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Create a backup of all your JSON data
+                    files.</p>
+            </div>
+            <button class="btn" onclick="triggerBackup()" style="background: var(--primary-color);">Backup Now</button>
+        </div>
+    </div>
+
+    <!-- System Section -->
+    <div class="settings-section">
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            System</h2>
+
+        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Application Update</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Check for updates from the
+                    repository.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="checkUpdate()" id="checkUpdateBtn">Check for Update</button>
+        </div>
+        <div id="updateStatus"
+            style="margin-top: 10px; color: var(--text-muted); font-size: 0.9rem; text-align: right;"></div>
+    </div>
+
+</div>
+
+<!-- Init Settings Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Init properties
+        const savedScheme = localStorage.getItem('colorScheme') || 'default';
+        document.getElementById('colorSchemeSelect').value = savedScheme;
+
+        const savedFont = localStorage.getItem('fontFamily') || "'Inter', sans-serif";
+        document.getElementById('fontFamilySelect').value = savedFont;
+
+        // Ensure theme radio is set correctly
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'light') {
+            document.getElementById('settingsLightTheme').checked = true;
+        } else {
+            document.getElementById('settingsDarkTheme').checked = true;
+        }
+    });
+
+    async function triggerBackup() {
+        try {
+            const res = await fetch('/api/backup', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Backup successful! Files saved to: ' + data.path);
+            } else {
+                alert('Backup failed: ' + data.error);
+            }
+        } catch (e) {
+            alert('Error triggering backup: ' + e);
+        }
+    }
+
+    async function saveUserName() {
+        const nameInput = document.getElementById('userNameInput');
+        const newName = nameInput.value.trim();
+        if (!newName) {
+            alert('Please enter a valid nickname.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/settings/username', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Nickname saved! It will reflect on the dashboard.');
+            } else {
+                alert('Error saving nickname: ' + data.error);
+            }
+        } catch (e) {
+            alert('Error saving nickname: ' + e);
+        }
+    }
+
+    async function checkUpdate() {
+        const statusDiv = document.getElementById('updateStatus');
+        const btn = document.getElementById('checkUpdateBtn');
+
+        statusDiv.innerText = 'Checking...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/check_update');
+            const data = await res.json();
+
+            if (data.update_available) {
+                statusDiv.innerText = `${data.message} Remote: ${data.remote_date}, Local: ${data.local_date}`;
+                statusDiv.style.color = 'var(--active-color)';
+            } else {
+                statusDiv.innerText = `${data.message} Last check: ${new Date().toLocaleTimeString()}`;
+                statusDiv.style.color = 'var(--text-muted)';
+            }
+        } catch (e) {
+            statusDiv.innerText = 'Error checking update.';
+            statusDiv.style.color = 'red';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}
