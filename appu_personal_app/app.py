@@ -21,16 +21,37 @@ def short_date_filter(value):
     except:
         return value
 
+@app.template_filter('days_until')
+def days_until_filter(date_str):
+    if not date_str: return 999
+    try:
+        if isinstance(date_str, str):
+            # Try ISO format first
+            try:
+                rem_date = datetime.fromisoformat(date_str).date()
+            except:
+                # Try YYYY-MM-DD format
+                rem_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        else:
+            rem_date = date_str
+        today = datetime.now().date()
+        delta = (rem_date - today).days
+        return delta
+    except:
+        return 999
+
 @app.route('/')
 def dashboard():
     upcoming_reminders = data_manager.get_upcoming_reminders(weeks=6)
     future_reminders = data_manager.get_upcoming_reminders(weeks=12)
     active_tasks = data_manager.get_active_tasks()
+    projects = data_manager.get_all_projects()
     user_name = data_manager.get_user_name()
     return render_template('dashboard.html', 
                            upcoming_reminders=upcoming_reminders,
                            future_reminders=future_reminders,
                            active_tasks=active_tasks,
+                           projects=projects,
                            user_name=user_name)
 
 @app.route('/all')
@@ -38,7 +59,8 @@ def all_items():
     reminders = data_manager.get_all_reminders()
     tasks = data_manager.get_all_tasks()
     kb_items = data_manager.get_kb_items()
-    return render_template('list_view.html', reminders=reminders, tasks=tasks, kb_items=kb_items)
+    projects = data_manager.get_all_projects()
+    return render_template('list_view.html', reminders=reminders, tasks=tasks, kb_items=kb_items, projects=projects)
 
 @app.route('/calendar')
 def calendar_view():
@@ -272,6 +294,120 @@ def backup_data():
         return jsonify({"success": True, "path": backup_dir, "files": backed_up_files})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+# --- Projects API ---
+@app.route('/project/<project_id>')
+def project_detail(project_id):
+    project = data_manager.get_project(project_id)
+    if not project:
+        return redirect(url_for('dashboard'))
+    return render_template('project.html', project=project)
+
+@app.route('/api/projects', methods=['GET'])
+def get_projects():
+    return jsonify(data_manager.get_all_projects())
+
+@app.route('/api/projects', methods=['POST'])
+def add_project():
+    data = request.json
+    project = data_manager.add_project(
+        data['name'],
+        data['description'],
+        data['start_date'],
+        data['end_date'],
+        data['status']
+    )
+    return jsonify(project)
+
+@app.route('/api/projects/<project_id>', methods=['GET'])
+def get_project(project_id):
+    project = data_manager.get_project(project_id)
+    if project:
+        return jsonify(project)
+    return jsonify({"error": "Project not found"}), 404
+
+@app.route('/api/projects/<project_id>', methods=['PUT'])
+def update_project(project_id):
+    data = request.json
+    result = data_manager.update_project(
+        project_id,
+        data['name'],
+        data['description'],
+        data['start_date'],
+        data['end_date'],
+        data['status']
+    )
+    if result:
+        if isinstance(result, dict) and 'error' in result:
+            return jsonify(result), 400
+        return jsonify(result)
+    return jsonify({"error": "Project not found"}), 404
+
+@app.route('/api/projects/<project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    success = data_manager.delete_project(project_id)
+    return jsonify({"success": success})
+
+@app.route('/api/projects/<project_id>/tasks', methods=['POST'])
+def add_project_task(project_id):
+    data = request.json
+    task = data_manager.add_project_task(
+        project_id,
+        data['name'],
+        data.get('comments', ''),
+        data['start_date'],
+        data['end_date'],
+        data.get('parent_id')
+    )
+    if task:
+        if "error" in task:
+            return jsonify(task), 400
+        return jsonify(task)
+    return jsonify({"error": "Project not found"}), 404
+
+@app.route('/api/projects/<project_id>/tasks/<task_id>', methods=['PUT'])
+def update_project_task(project_id, task_id):
+    data = request.json
+    result = data_manager.update_project_task(
+        project_id,
+        task_id,
+        data.get('name'),
+        data.get('comments'),
+        data.get('start_date'),
+        data.get('end_date'),
+        data.get('status')
+    )
+    if result:
+        if isinstance(result, dict) and 'error' in result:
+            return jsonify(result), 400
+        return jsonify(result)
+    return jsonify({"error": "Task not found"}), 404
+
+@app.route('/api/projects/<project_id>/tasks/<task_id>', methods=['DELETE'])
+def delete_project_task(project_id, task_id):
+    success = data_manager.delete_project_task(project_id, task_id)
+    return jsonify({"success": success})
+
+@app.route('/api/projects/<project_id>/tasks/<task_id>/comments', methods=['POST'])
+def add_project_task_comment(project_id, task_id):
+    data = request.json
+    comment = data_manager.add_project_task_comment(project_id, task_id, data['text'])
+    if comment:
+        return jsonify(comment)
+    return jsonify({"error": "Task not found"}), 404
+
+@app.route('/api/projects/<project_id>/tasks/<task_id>/status', methods=['PUT'])
+def update_project_task_status(project_id, task_id):
+    data = request.json
+    success = data_manager.update_project_task_status(project_id, task_id, data['status'])
+    return jsonify({"success": success})
+
+@app.route('/api/projects/<project_id>/tasks/<task_id>/parent-dates', methods=['GET'])
+def get_parent_task_dates(project_id, task_id):
+    start_date, end_date = data_manager.get_parent_task_dates(project_id, task_id)
+    if start_date and end_date:
+        return jsonify({"start_date": start_date, "end_date": end_date})
+    return jsonify({"error": "Parent task or dates not found"}), 404
 
 @app.route('/api/check_update')
 def check_update():

@@ -26,7 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 'solarized-light', 'solarized-dark',
                 'monokai', 'nord',
                 'gruvbox-light', 'gruvbox-dark',
-                'cyberpunk', 'forest', 'sunset', 'midnight'
+                'cyberpunk', 'forest', 'sunset', 'midnight',
+                'atom-one-dark', 'atom-one-light', 'ayu-dark', 'ayu-light', 'ayu-mirage',
+                'base16-tomorrow-dark', 'base16-tomorrow-light', 'catppuccin-latte',
+                'catppuccin-frappe', 'catppuccin-macchiato', 'catppuccin-mocha', 'cobalt2',
+                'darcula', 'dracula-soft', 'github-dark', 'github-light', 'jellybeans',
+                'material-darker', 'material-lighter', 'material-ocean', 'material-palenight',
+                'monokai-pro', 'night-owl', 'shades-of-purple', 'synthwave-84',
+                'tokyo-night', 'zenburn', 'solarized-ocean', 'deep-purple', 'matrix-green'
             ];
             if (validThemes.includes(theme)) {
                 schemeSelect.value = theme;
@@ -1069,6 +1076,471 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pg-length-val').innerText = this.value;
         });
     }
+
+    // Subtask toggle function
+    window.toggleSubtask = function (element) {
+        const subtaskItem = element.closest('.subtask-item');
+        const nestedSubtasks = subtaskItem.querySelector('.subtask-nested');
+        if (!nestedSubtasks) return;
+
+        const isExpanded = element.getAttribute('data-expanded') === 'true';
+
+        if (isExpanded) {
+            nestedSubtasks.style.display = 'none';
+            element.textContent = '▶';
+            element.setAttribute('data-expanded', 'false');
+        } else {
+            nestedSubtasks.style.display = 'block';
+            element.textContent = '▼';
+            element.setAttribute('data-expanded', 'true');
+        }
+    }
+
+    // Dashboard arrangement functions
+    window.moveSection = function (sectionType, direction) {
+        const sections = ['tasks', 'reminders', 'projects'];
+        const currentIndex = sections.indexOf(sectionType);
+        if (currentIndex === -1) return;
+
+        let newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        if (newIndex < 0 || newIndex >= sections.length) return;
+
+        const currentSection = document.querySelector(`[data-section="${sectionType}"]`);
+        const targetSection = document.querySelector(`[data-section="${sections[newIndex]}"]`);
+
+        if (currentSection && targetSection) {
+            if (direction === 'up') {
+                currentSection.parentNode.insertBefore(currentSection, targetSection);
+            } else {
+                currentSection.parentNode.insertBefore(currentSection, targetSection.nextSibling);
+            }
+
+            // Save order to localStorage
+            const newOrder = Array.from(document.querySelectorAll('.section-container')).map(s => s.getAttribute('data-section'));
+            localStorage.setItem('dashboardSectionOrder', JSON.stringify(newOrder));
+        }
+    }
+
+    window.moveItem = function (itemType, itemId, direction) {
+        const container = document.querySelector(`[data-sortable="${itemType}s"]`);
+        if (!container) return;
+
+        const items = Array.from(container.querySelectorAll(`[data-item-type="${itemType}"]`));
+        const currentIndex = items.findIndex(item => item.getAttribute('data-item-id') === itemId);
+
+        if (currentIndex === -1) return;
+
+        let newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        if (newIndex < 0 || newIndex >= items.length) return;
+
+        const currentItem = items[currentIndex];
+        const targetItem = items[newIndex];
+
+        if (direction === 'up') {
+            container.insertBefore(currentItem, targetItem);
+        } else {
+            container.insertBefore(currentItem, targetItem.nextSibling);
+        }
+
+        // Save order to localStorage
+        const itemOrder = Array.from(container.querySelectorAll(`[data-item-type="${itemType}"]`)).map(item => item.getAttribute('data-item-id'));
+        localStorage.setItem(`dashboard${itemType}sOrder`, JSON.stringify(itemOrder));
+    }
+
+    // Restore dashboard order on load
+    if (window.location.pathname === '/') {
+        const savedSectionOrder = localStorage.getItem('dashboardSectionOrder');
+        if (savedSectionOrder) {
+            try {
+                const order = JSON.parse(savedSectionOrder);
+                const sections = document.querySelectorAll('.section-container');
+                const sectionMap = {};
+                sections.forEach(s => {
+                    sectionMap[s.getAttribute('data-section')] = s;
+                });
+
+                const dashboardGrid = document.querySelector('.dashboard-grid');
+                if (dashboardGrid) {
+                    order.forEach(sectionType => {
+                        if (sectionMap[sectionType]) {
+                            dashboardGrid.appendChild(sectionMap[sectionType]);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error restoring section order:', e);
+            }
+        }
+
+        // Restore item orders
+        ['task', 'reminder', 'project'].forEach(itemType => {
+            const savedOrder = localStorage.getItem(`dashboard${itemType}sOrder`);
+            if (savedOrder) {
+                try {
+                    const order = JSON.parse(savedOrder);
+                    const container = document.querySelector(`[data-sortable="${itemType}s"]`);
+                    if (!container) return;
+
+                    const items = Array.from(container.querySelectorAll(`[data-item-type="${itemType}"]`));
+                    const itemMap = {};
+                    items.forEach(item => {
+                        itemMap[item.getAttribute('data-item-id')] = item;
+                    });
+
+                    order.forEach(itemId => {
+                        if (itemMap[itemId]) {
+                            container.appendChild(itemMap[itemId]);
+                        }
+                    });
+                } catch (e) {
+                    console.error(`Error restoring ${itemType} order:`, e);
+                }
+            }
+        });
+    }
+
+    // --- Projects Logic ---
+    const projectModal = document.getElementById('projectModal');
+    const projectTaskModal = document.getElementById('projectTaskModal');
+    const projectTaskCommentsModal = document.getElementById('projectTaskCommentsModal');
+
+    window.openCreateProjectModal = function () {
+        if (!projectModal) return;
+        document.getElementById('projectModalTitle').innerText = 'New Project';
+        document.getElementById('projectForm').reset();
+        document.getElementById('projectId').value = '';
+        projectModal.style.display = 'block';
+    }
+
+    window.openEditProjectModal = function (id, name, description, startDate, endDate, status) {
+        if (!projectModal) return;
+        document.getElementById('projectModalTitle').innerText = 'Edit Project';
+        document.getElementById('projectId').value = id;
+        document.getElementById('projectName').value = name;
+        document.getElementById('projectDescription').value = description;
+        document.getElementById('projectStartDate').value = startDate;
+        document.getElementById('projectEndDate').value = endDate;
+        document.getElementById('projectStatus').value = status;
+        projectModal.style.display = 'block';
+    }
+
+    window.closeProjectModal = function () {
+        if (!projectModal) return;
+        projectModal.style.display = 'none';
+        document.getElementById('projectForm').reset();
+    }
+
+    window.openCreateProjectTaskModal = async function (projectId, parentId = null) {
+        if (!projectTaskModal) return;
+        document.getElementById('projectTaskModalTitle').innerText = parentId ? 'New Subtask' : 'New Task';
+        document.getElementById('projectTaskForm').reset();
+        document.getElementById('projectTaskProjectId').value = projectId;
+        document.getElementById('projectTaskTaskId').value = '';
+        document.getElementById('projectTaskParentId').value = parentId || '';
+        document.getElementById('projectTaskStatusGroup').style.display = 'none';
+
+        // Get date constraints - if parentId exists, fetch parent task dates, otherwise use project dates
+        let minStartDate = window.projectStartDate;
+        let maxEndDate = window.projectEndDate;
+
+        if (parentId) {
+            try {
+                const res = await fetch(`/api/projects/${projectId}/tasks/${parentId}/parent-dates`);
+                if (res.ok) {
+                    const data = await res.json();
+                    minStartDate = data.start_date;
+                    maxEndDate = data.end_date;
+                }
+            } catch (e) {
+                console.error('Error fetching parent dates:', e);
+            }
+        }
+
+        // Set date constraints
+        if (minStartDate && maxEndDate) {
+            const startDateInput = document.getElementById('projectTaskStartDate');
+            const endDateInput = document.getElementById('projectTaskEndDate');
+            startDateInput.min = minStartDate;
+            startDateInput.max = maxEndDate;
+            endDateInput.min = minStartDate;
+            endDateInput.max = maxEndDate;
+        }
+
+        projectTaskModal.style.display = 'block';
+    }
+
+    window.openCreateSubtaskModal = function (projectId, parentId) {
+        openCreateProjectTaskModal(projectId, parentId);
+    }
+
+    window.openEditProjectTaskModal = function (projectId, taskId, name, comments, startDate, endDate, status, parentStartDate, parentEndDate) {
+        if (!projectTaskModal) return;
+        document.getElementById('projectTaskModalTitle').innerText = 'Edit Task';
+        document.getElementById('projectTaskProjectId').value = projectId;
+        document.getElementById('projectTaskTaskId').value = taskId;
+        document.getElementById('projectTaskParentId').value = '';
+        document.getElementById('projectTaskName').value = name;
+        document.getElementById('projectTaskComments').value = comments;
+        document.getElementById('projectTaskStartDate').value = startDate;
+        document.getElementById('projectTaskEndDate').value = endDate;
+        document.getElementById('projectTaskStatus').value = status;
+        document.getElementById('projectTaskStatusGroup').style.display = 'block';
+
+        // Set date constraints - use parent dates if provided (for subtasks), otherwise project dates
+        const minStartDate = parentStartDate || window.projectStartDate;
+        const maxEndDate = parentEndDate || window.projectEndDate;
+
+        if (minStartDate && maxEndDate) {
+            const startDateInput = document.getElementById('projectTaskStartDate');
+            const endDateInput = document.getElementById('projectTaskEndDate');
+            startDateInput.min = minStartDate;
+            startDateInput.max = maxEndDate;
+            endDateInput.min = minStartDate;
+            endDateInput.max = maxEndDate;
+        }
+
+        projectTaskModal.style.display = 'block';
+    }
+
+    window.closeProjectTaskModal = function () {
+        if (!projectTaskModal) return;
+        projectTaskModal.style.display = 'none';
+        document.getElementById('projectTaskForm').reset();
+    }
+
+    window.viewProjectTaskComments = async function (projectId, taskId, taskName) {
+        if (!projectTaskCommentsModal) return;
+        const commentsList = document.getElementById('projectTaskCommentsList');
+        const modalTitle = document.getElementById('projectTaskCommentsModalTitle');
+        const submitBtn = document.getElementById('submitProjectTaskCommentBtn');
+        const input = document.getElementById('newProjectTaskCommentInput');
+
+        modalTitle.innerText = `Comments: ${taskName}`;
+        commentsList.innerHTML = '<p style="text-align:center;">Loading...</p>';
+        projectTaskCommentsModal.style.display = 'block';
+
+        const res = await fetch(`/api/projects/${projectId}`);
+        const project = await res.json();
+        const task = findTaskInTree(project.tasks, taskId);
+
+        if (task) {
+            commentsList.innerHTML = '';
+            if (task.task_comments && task.task_comments.length > 0) {
+                task.task_comments.forEach(c => {
+                    const date = new Date(c.timestamp).toLocaleString();
+                    const div = document.createElement('div');
+                    div.className = 'comment-entry';
+                    div.innerHTML = `<div class="comment-time">${date}</div><div>${c.text}</div>`;
+                    commentsList.appendChild(div);
+                });
+            } else {
+                commentsList.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No comments yet.</p>';
+            }
+        }
+
+        input.value = '';
+        submitBtn.onclick = () => submitProjectTaskComment(projectId, taskId, taskName);
+        input.onkeypress = (e) => {
+            if (e.key === 'Enter') {
+                submitProjectTaskComment(projectId, taskId, taskName);
+            }
+        };
+    }
+
+    function findTaskInTree(tasks, taskId) {
+        for (const task of tasks) {
+            if (task.id === taskId) return task;
+            if (task.subtasks) {
+                const found = findTaskInTree(task.subtasks, taskId);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    window.submitProjectTaskComment = async function (projectId, taskId, taskName) {
+        const input = document.getElementById('newProjectTaskCommentInput');
+        const text = input.value.trim();
+        if (!text) {
+            alert('Please enter a comment');
+            return;
+        }
+
+        const res = await fetch(`/api/projects/${projectId}/tasks/${taskId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+
+        if (res.ok) {
+            input.value = '';
+            await viewProjectTaskComments(projectId, taskId, taskName);
+        } else {
+            alert('Failed to add comment');
+        }
+    }
+
+    window.closeProjectTaskCommentsModal = function () {
+        if (!projectTaskCommentsModal) return;
+        projectTaskCommentsModal.style.display = 'none';
+        document.getElementById('newProjectTaskCommentInput').value = '';
+    }
+
+    window.toggleTask = function (element) {
+        const taskItem = element.closest('.task-item');
+        const subtasks = taskItem.querySelector('.task-subtasks');
+        const isExpanded = element.getAttribute('data-expanded') === 'true';
+
+        if (isExpanded) {
+            subtasks.style.display = 'none';
+            element.textContent = '▶';
+            element.setAttribute('data-expanded', 'false');
+        } else {
+            subtasks.style.display = 'block';
+            element.textContent = '▼';
+            element.setAttribute('data-expanded', 'true');
+        }
+    }
+
+    // Project form submission
+    document.getElementById('projectForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('projectId').value;
+        const data = {
+            name: document.getElementById('projectName').value,
+            description: document.getElementById('projectDescription').value,
+            start_date: document.getElementById('projectStartDate').value,
+            end_date: document.getElementById('projectEndDate').value,
+            status: document.getElementById('projectStatus').value
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/projects/${id}` : '/api/projects';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+            closeProjectModal();
+            window.location.reload();
+        } else {
+            alert(result.error || 'Failed to save project');
+        }
+    });
+
+    // Project task form submission
+    document.getElementById('projectTaskForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const projectId = document.getElementById('projectTaskProjectId').value;
+        const taskId = document.getElementById('projectTaskTaskId').value;
+        const parentId = document.getElementById('projectTaskParentId').value;
+        const data = {
+            name: document.getElementById('projectTaskName').value,
+            comments: document.getElementById('projectTaskComments').value,
+            start_date: document.getElementById('projectTaskStartDate').value,
+            end_date: document.getElementById('projectTaskEndDate').value,
+            parent_id: parentId || null
+        };
+
+        if (taskId) {
+            // Edit existing task
+            data.status = document.getElementById('projectTaskStatus').value;
+            const res = await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                closeProjectTaskModal();
+                window.location.reload();
+            } else {
+                alert(result.error || 'Failed to update task');
+            }
+        } else {
+            // Create new task
+            const res = await fetch(`/api/projects/${projectId}/tasks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                closeProjectTaskModal();
+                window.location.reload();
+            } else {
+                const result = await res.json();
+                alert(result.error || 'Failed to create task');
+            }
+        }
+    });
+
+    // Handle project deletion
+    document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn') || e.target.closest('.delete-btn')) {
+            const btn = e.target.classList.contains('delete-btn') ? e.target : e.target.closest('.delete-btn');
+            const itemType = btn.getAttribute('data-type');
+            const itemId = btn.getAttribute('data-id');
+            const projectId = btn.getAttribute('data-project-id');
+            const taskId = btn.getAttribute('data-task-id');
+
+            if (itemType === 'projects' && itemId) {
+                if (!confirm('Are you sure you want to delete this project?')) return;
+
+                const res = await fetch(`/api/projects/${itemId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to delete project');
+                }
+            } else if (itemType === 'project-tasks' && projectId && taskId) {
+                if (!confirm('Are you sure you want to delete this task?')) return;
+
+                const res = await fetch(`/api/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to delete task');
+                }
+            }
+        }
+
+        // Handle project edit button
+        if (e.target.classList.contains('edit-btn') || e.target.closest('.edit-btn')) {
+            const btn = e.target.classList.contains('edit-btn') ? e.target : e.target.closest('.edit-btn');
+            const editType = btn.getAttribute('data-edit-type');
+
+            if (editType === 'project') {
+                const id = btn.getAttribute('data-edit-id');
+                const name = btn.getAttribute('data-edit-name');
+                const description = btn.getAttribute('data-edit-description');
+                const startDate = btn.getAttribute('data-edit-start-date');
+                const endDate = btn.getAttribute('data-edit-end-date');
+                const status = btn.getAttribute('data-edit-status');
+
+                openEditProjectModal(id, name, description, startDate, endDate, status);
+            }
+        }
+    });
+
+    // Close modals on outside click - extend existing onclick handler
+    const existingOnClick = window.onclick;
+    window.onclick = function (event) {
+        if (existingOnClick) existingOnClick(event);
+        if (event.target == modal) modal.style.display = "none";
+        if (event.target == editModal) editModal.style.display = "none";
+        if (event.target == commentsModal) commentsModal.style.display = "none";
+        if (event.target == kbModal) kbModal.style.display = "none";
+        if (event.target == kbResultModal) kbResultModal.style.display = "none";
+        if (projectModal && event.target == projectModal) projectModal.style.display = "none";
+        if (projectTaskModal && event.target == projectTaskModal) projectTaskModal.style.display = "none";
+        if (projectTaskCommentsModal && event.target == projectTaskCommentsModal) projectTaskCommentsModal.style.display = "none";
+    }
     window.copyToClipboard = function (text) {
         if (!text) return;
 
@@ -1129,3 +1601,248 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1500);
     }
 });
+
+// --- Drag and Drop Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    restoreDashboardOrder();
+    enableDragAndDrop();
+});
+
+function restoreDashboardOrder() {
+    // Restore Section Order
+    const dashboardGrid = document.querySelector('.dashboard-grid');
+    if (dashboardGrid) {
+        const savedSectionOrder = localStorage.getItem('dashboardSectionOrder');
+        if (savedSectionOrder) {
+            try {
+                const order = JSON.parse(savedSectionOrder);
+                const currentSections = Array.from(dashboardGrid.querySelectorAll('.section-container'));
+                const sectionMap = new Map();
+                currentSections.forEach(s => sectionMap.set(s.getAttribute('data-section'), s));
+
+                // Clear grid and re-append in order
+                // But only if all sections are present to avoid data loss on partial loads?
+                // Or just append efficiently.
+
+                order.forEach(sectionName => {
+                    const section = sectionMap.get(sectionName);
+                    if (section) {
+                        dashboardGrid.appendChild(section);
+                    }
+                });
+                // Append any remaining (new) sections not in saved order
+                currentSections.forEach(s => {
+                    if (!order.includes(s.getAttribute('data-section'))) {
+                        dashboardGrid.appendChild(s);
+                    }
+                });
+            } catch (e) {
+                console.error("Error restoring section order", e);
+            }
+        }
+    }
+
+    // Restore Items Order (Tasks, Reminders, Projects)
+    const lists = [
+        { selector: '.task-list', key: 'dashboardtasksOrder', type: 'task' },
+        { selector: '.reminder-list', key: 'dashboardremindersOrder', type: 'reminder' },
+        { selector: '.project-list', key: 'dashboardprojectsOrder', type: 'project' }
+    ];
+
+    lists.forEach(listInfo => {
+        const listContainer = document.querySelector(listInfo.selector);
+        if (listContainer) {
+            const savedOrder = localStorage.getItem(listInfo.key);
+            if (savedOrder) {
+                try {
+                    const order = JSON.parse(savedOrder);
+                    const currentItems = Array.from(listContainer.querySelectorAll('.item-card'));
+                    const itemMap = new Map();
+                    currentItems.forEach(item => itemMap.set(item.getAttribute('data-item-id'), item));
+
+                    order.forEach(itemId => {
+                        const item = itemMap.get(String(itemId));
+                        if (item) {
+                            listContainer.appendChild(item);
+                        }
+                    });
+
+                    // Append remaining
+                    currentItems.forEach(item => {
+                        if (!order.includes(item.getAttribute('data-item-id'))) {
+                            listContainer.appendChild(item);
+                        }
+                    });
+                } catch (e) {
+                    console.error(`Error restoring ${listInfo.type} order`, e);
+                }
+            }
+        }
+    });
+}
+
+function enableDragAndDrop() {
+    // Section Dragging
+    const sections = document.querySelectorAll('.section-container');
+    const dashboardGrid = document.querySelector('.dashboard-grid');
+
+    if (dashboardGrid) {
+        sections.forEach(section => {
+            section.setAttribute('draggable', 'true');
+            section.addEventListener('dragstart', handleSectionDragStart);
+            section.addEventListener('dragover', handleSectionDragOver);
+            section.addEventListener('drop', handleSectionDrop);
+            section.addEventListener('dragenter', handleSectionDragEnter);
+            section.addEventListener('dragleave', handleSectionDragLeave);
+        });
+    }
+
+    // Item Dragging (Tasks, Reminders, Projects)
+    const itemLists = document.querySelectorAll('.task-list, .reminder-list, .project-list');
+
+    itemLists.forEach(list => {
+        list.addEventListener('dragstart', handleItemDragStart);
+        list.addEventListener('dragover', handleItemDragOver);
+        list.addEventListener('drop', handleItemDrop);
+    });
+}
+
+// Global variable to store dragged element
+let draggedElement = null;
+let draggedType = null; // 'section' or 'item'
+
+// Section Handlers
+function handleSectionDragStart(e) {
+    draggedElement = this;
+    draggedType = 'section';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    this.style.opacity = '0.4';
+}
+
+function handleSectionDragOver(e) {
+    if (draggedType !== 'section') return;
+    if (e.preventDefault) e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleSectionDragEnter(e) {
+    if (draggedType !== 'section') return;
+    this.classList.add('over');
+}
+
+function handleSectionDragLeave(e) {
+    if (draggedType !== 'section') return;
+    this.classList.remove('over');
+}
+
+function handleSectionDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (draggedType !== 'section') return false;
+
+    if (draggedElement !== this) {
+        // Swap or Move logic
+        // We need to reorder in the DOM.
+        // A simple way is to swap the elements or insertBefore/After
+        const grid = this.parentNode;
+
+        // Find positions
+        const allSections = Array.from(grid.querySelectorAll('.section-container'));
+        const draggedIndex = allSections.indexOf(draggedElement);
+        const targetIndex = allSections.indexOf(this);
+
+        if (draggedIndex < targetIndex) {
+            grid.insertBefore(draggedElement, this.nextSibling);
+        } else {
+            grid.insertBefore(draggedElement, this);
+        }
+
+        // Save Order
+        const newOrder = Array.from(grid.querySelectorAll('.section-container')).map(s => s.getAttribute('data-section'));
+        localStorage.setItem('dashboardSectionOrder', JSON.stringify(newOrder));
+    }
+
+    this.classList.remove('over');
+    draggedElement.style.opacity = '1';
+    draggedElement = null;
+    draggedType = null;
+    return false;
+}
+
+// Item Handlers
+function handleItemDragStart(e) {
+    e.stopPropagation(); // Prevent section drag start
+    // Ensure we are dragging an item card
+    let target = e.target;
+    if (!target.classList.contains('item-card')) {
+        target = target.closest('.item-card');
+    }
+    if (!target) return;
+
+    draggedElement = target;
+    draggedType = 'item';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', target.getAttribute('data-item-id'));
+    target.style.opacity = '0.4';
+}
+
+function handleItemDragOver(e) {
+    if (draggedType !== 'item') return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Verify we are over the same list type
+    const list = e.target.closest('.task-list, .reminder-list, .project-list');
+    // Check if dragging onto same container
+    if (list && draggedElement.parentNode === list) {
+        e.dataTransfer.dropEffect = 'move';
+    } else {
+        e.dataTransfer.dropEffect = 'none';
+    }
+    return false;
+}
+
+function handleItemDrop(e) {
+    e.stopPropagation();
+    if (draggedType !== 'item') return false;
+
+    const targetCard = e.target.closest('.item-card');
+    const targetList = e.target.closest('.task-list, .reminder-list, .project-list');
+
+    if (targetList && draggedElement.parentNode === targetList) {
+        if (targetCard && targetCard !== draggedElement) {
+            // Determine insert position (before or after)
+            const rect = targetCard.getBoundingClientRect();
+            const relX = e.clientX - rect.left;
+            // Depending on layout (grid vs list). Dashboard uses grid.
+            // Simplified: Insert before
+
+            // Just swap for simplicity or insertBefore
+            const children = Array.from(targetList.children);
+            const draggedIdx = children.indexOf(draggedElement);
+            const targetIdx = children.indexOf(targetCard);
+
+            if (draggedIdx < targetIdx) {
+                targetList.insertBefore(draggedElement, targetCard.nextSibling);
+            } else {
+                targetList.insertBefore(draggedElement, targetCard);
+            }
+        } else if (!targetCard && targetList) {
+            // Dropped on empty space in list
+            targetList.appendChild(draggedElement);
+        }
+
+        // Save Order
+        const itemType = draggedElement.getAttribute('data-item-type'); // 'task', 'reminder', 'project'
+        const container = draggedElement.parentNode;
+        const itemOrder = Array.from(container.querySelectorAll(`[data-item-type="${itemType}"]`)).map(item => item.getAttribute('data-item-id'));
+        if (itemType) {
+            localStorage.setItem(`dashboard${itemType}sOrder`, JSON.stringify(itemOrder));
+        }
+    }
+
+    draggedElement.style.opacity = '1';
+    draggedElement = null;
+    draggedType = null;
+    return false;
+}

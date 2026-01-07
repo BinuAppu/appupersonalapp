@@ -10,6 +10,7 @@
         <button class="btn btn-secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
         <button class="btn btn-secondary" style="background-color: var(--accent-color);" onclick="openKBModal()">🧠 New
             KB Item</button>
+        <button class="btn btn-secondary" style="background-color: #9C27B0;" onclick="openCreateProjectModal()">📁 New Project</button>
     </div>
 </div>
 
@@ -18,6 +19,7 @@
     <button class="tab-btn" id="reminderTabBtn" onclick="showTab('reminders')">🔔 Reminders ({{ reminders|length
         }})</button>
     <button class="tab-btn" id="kbTabBtn" onclick="showTab('kb')">🧠 Knowledge Base ({{ kb_items|length }})</button>
+    <button class="tab-btn" id="projectTabBtn" onclick="showTab('projects')">📁 Projects ({{ projects|length }})</button>
 </div>
 
 <div id="tasksTab" class="tab-content">
@@ -153,15 +155,64 @@
     </div>
 </div>
 
+<div id="projectsTab" class="tab-content" style="display: none;">
+    <div class="card">
+        <div class="filters">
+            <label>Filter Status:</label>
+            <select id="projectStatusFilter" onchange="filterItems()">
+                <option value="All">All Statuses</option>
+                <option value="Yet to Start">Yet to Start</option>
+                <option value="Work In progress">Work In progress</option>
+                <option value="On-Hold">On-Hold</option>
+                <option value="Completed">Completed</option>
+                <option value="Delayed">Delayed</option>
+            </select>
+        </div>
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 12px;">Name</th>
+                    <th style="padding: 12px;">Description</th>
+                    <th style="padding: 12px;">Start Date</th>
+                    <th style="padding: 12px;">End Date</th>
+                    <th style="padding: 12px;">Status</th>
+                    <th style="padding: 12px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="projectTable">
+                {% for project in projects %}
+                <tr style="border-bottom: 1px solid var(--border-color);" data-status="{{ project.status }}">
+                    <td style="padding: 12px; font-weight: 600;"><a href="/project/{{ project.id }}" style="color: var(--primary-color); text-decoration: none;">{{ project.name }}</a></td>
+                    <td style="padding: 12px; color: var(--text-muted); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ project.description }}</td>
+                    <td style="padding: 12px;">{{ project.start_date }}</td>
+                    <td style="padding: 12px;">{{ project.end_date }}</td>
+                    <td style="padding: 12px;"><span class="status-badge status-{{ project.status.lower().replace(' ', '') }}">{{ project.status }}</span></td>
+                    <td style="padding: 12px; display: flex; gap: 8px;">
+                        <button class="edit-btn" data-edit-type="project" data-edit-id="{{ project.id }}"
+                            data-edit-name="{{ project.name }}" data-edit-description="{{ project.description }}"
+                            data-edit-start-date="{{ project.start_date }}" data-edit-end-date="{{ project.end_date }}" data-edit-status="{{ project.status }}"
+                            style="background:none; border:none; color: var(--primary-color); cursor:pointer; font-weight:600;">Edit</button>
+                        <button class="delete-btn" data-type="projects" data-id="{{ project.id }}"
+                            style="background:none; border:none; color: #FF7575; cursor:pointer; font-weight:600;">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <script>
     window.showTab = function (tab) {
         document.getElementById('tasksTab').style.display = tab === 'tasks' ? 'block' : 'none';
         document.getElementById('remindersTab').style.display = tab === 'reminders' ? 'block' : 'none';
         document.getElementById('kbTab').style.display = tab === 'kb' ? 'block' : 'none';
+        document.getElementById('projectsTab').style.display = tab === 'projects' ? 'block' : 'none';
 
         document.getElementById('taskTabBtn').classList.toggle('active', tab === 'tasks');
         document.getElementById('reminderTabBtn').classList.toggle('active', tab === 'reminders');
         document.getElementById('kbTabBtn').classList.toggle('active', tab === 'kb');
+        document.getElementById('projectTabBtn').classList.toggle('active', tab === 'projects');
 
         // Save the active tab
         localStorage.setItem('activeTab', tab);
@@ -210,6 +261,19 @@
                 const titleText = kbRows[i].getElementsByTagName("td")[0]?.textContent.toUpperCase() || '';
                 const matchesSearch = titleText.indexOf(searchFilter) > -1;
                 kbRows[i].style.display = matchesSearch ? "" : "none";
+            }
+        }
+
+        // Projects
+        const projectStatusFilter = document.getElementById("projectStatusFilter")?.value || "All";
+        const projectTable = document.getElementById("projectTable");
+        if (projectTable) {
+            const projectRows = projectTable.getElementsByTagName("tr");
+            for (let i = 0; i < projectRows.length; i++) {
+                const titleText = projectRows[i].getElementsByTagName("td")[0]?.textContent.toUpperCase() || '';
+                const matchesSearch = titleText.indexOf(searchFilter) > -1;
+                const matchesStatus = (projectStatusFilter === "All" || projectRows[i].getAttribute("data-status") === projectStatusFilter);
+                projectRows[i].style.display = (matchesSearch && matchesStatus) ? "" : "none";
             }
         }
     }

@@ -18,30 +18,37 @@
             <button class="btn btn-secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
             <button class="btn btn-secondary" style="background-color: var(--accent-color);" onclick="openKBModal()">🧠
                 New KB Item</button>
+            <button class="btn btn-secondary" style="background-color: #9C27B0;" onclick="openCreateProjectModal()">📁
+                New Project</button>
         </div>
     </div>
 </div>
 
 <div class="dashboard-grid">
     <!-- Active Tasks Top -->
-    <div class="section-container">
+    <div class="section-container" data-section="tasks">
         <div class="section-header">
             <h3>✅ Active Tasks</h3>
+
         </div>
-        <div class="task-list">
+        <div class="task-list" data-sortable="tasks">
             {% if active_tasks %}
             {% for task in active_tasks %}
-            <div class="item-card" onclick="viewComments('task', '{{ task.id }}', '{{ task.title }}')">
+            <div class="item-card" draggable="true" data-item-id="{{ task.id }}" data-item-type="task"
+                onclick="viewComments('task', '{{ task.id }}', '{{ task.title }}')">
                 <div class="item-card-header">
-                    <div>
+                    <div style="flex: 1;">
                         <h4 class="item-card-title">{{ task.title }}</h4>
                         <div class="item-card-meta">
                             <span class="status-badge status-{{ task.status.lower().replace(' ', '') }}">{{ task.status
                                 }}</span>
                         </div>
                     </div>
-                    <span class="delete-icon delete-btn" data-type="tasks" data-id="{{ task.id }}"
-                        onclick="event.stopPropagation()">🗑️</span>
+                    <div class="item-card-actions">
+
+                        <span class="delete-icon delete-btn" data-type="tasks" data-id="{{ task.id }}"
+                            onclick="event.stopPropagation()">🗑️</span>
+                    </div>
                 </div>
 
                 {% if task.comments %}
@@ -58,29 +65,42 @@
     </div>
 
     <!-- Upcoming Reminders Bottom -->
-    <div class="section-container">
+    <div class="section-container" data-section="reminders">
         <div class="section-header">
             <h3>🔔 Upcoming Reminders</h3>
+
         </div>
-        <div class="reminder-list">
+        <div class="reminder-list" data-sortable="reminders">
             {% if upcoming_reminders %}
             {% for rem in upcoming_reminders %}
-            <div class="item-card recur-{{ rem.recurrence.lower() }}"
-                onclick="viewComments('reminder', '{{ rem.id }}', '{{ rem.title|replace("'", "\\'") }}')">
-                <div class="item-card-header">
-                    <div>
-                        <h4 class="item-card-title">{{ rem.title }}</h4>
-                        <div class="item-card-meta">{{ rem.display_date }} • {{ rem.recurrence }}</div>
-                    </div>
-                    <span class="delete-icon delete-btn" data-type="reminders" data-id="{{ rem.id }}"
-                        onclick="event.stopPropagation()">🗑️</span>
-                </div>
+            {% set rem_date = rem.display_date|default(rem.date) %}
+            {% set days_until = rem_date|days_until %}
+            <div class="item-card recur-{{ rem.recurrence.lower() }}" draggable="true" data-item-id="{{ rem.id }}"
+                data-item-type="reminder"
+                onclick="viewComments('reminder', '{{ rem.id }}', '{{ rem.title|replace("'", "\\'") }}')"
+                style="position: relative;">
+                {% if days_until <= 7 and days_until>= 0 %}
+                    <span class="reminder-proximity-icon red"></span>
+                    {% elif days_until <= 14 and days_until> 7 %}
+                        <span class="reminder-proximity-icon orange"></span>
+                        {% endif %}
+                        <div class="item-card-header">
+                            <div style="flex: 1;">
+                                <h4 class="item-card-title">{{ rem.title }}</h4>
+                                <div class="item-card-meta">{{ rem.display_date }} • {{ rem.recurrence }}</div>
+                            </div>
+                            <div class="item-card-actions">
 
-                {% if rem.comments %}
-                <div class="latest-comment-preview">
-                    {{ rem.comments[-1].timestamp|short_date }} "{{ rem.comments[-1].text }}"
-                </div>
-                {% endif %}
+                                <span class="delete-icon delete-btn" data-type="reminders" data-id="{{ rem.id }}"
+                                    onclick="event.stopPropagation()">🗑️</span>
+                            </div>
+                        </div>
+
+                        {% if rem.comments %}
+                        <div class="latest-comment-preview">
+                            {{ rem.comments[-1].timestamp|short_date }} "{{ rem.comments[-1].text }}"
+                        </div>
+                        {% endif %}
             </div>
             {% endfor %}
             {% else %}
@@ -88,5 +108,45 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Projects Section -->
+    <div class="section-container" data-section="projects">
+        <div class="section-header">
+            <h3>📁 Projects</h3>
+
+        </div>
+        <div class="project-list" data-sortable="projects">
+            {% if projects %}
+            {% for project in projects %}
+            <div class="item-card project-card" draggable="true" data-item-id="{{ project.id }}"
+                data-item-type="project" onclick="window.location.href='/project/{{ project.id }}'">
+                <div class="item-card-header">
+                    <div style="flex: 1;">
+                        <h4 class="item-card-title">{{ project.name }}</h4>
+                        <div class="item-card-meta">
+                            <span class="status-badge status-{{ project.status.lower().replace(' ', '') }}">{{
+                                project.status }}</span>
+                            <span style="margin-left: 8px;">{{ project.start_date }} - {{ project.end_date }}</span>
+                        </div>
+                    </div>
+                    <div class="item-card-actions">
+
+                        <span class="delete-icon delete-btn" data-type="projects" data-id="{{ project.id }}"
+                            onclick="event.stopPropagation()">🗑️</span>
+                    </div>
+                </div>
+                {% if project.description %}
+                <div class="latest-comment-preview">
+                    {{ project.description }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="text-align:center; color: var(--text-muted);">No projects yet. Create your first project!</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
+
 {% endblock %}

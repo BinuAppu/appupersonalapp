@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appu's Personal App</title>
+    <title>Axolotl</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&family=Merriweather:wght@300;400;700&family=Montserrat:wght@400;500;600&family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@400;600&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Raleway:wght@400;500;600&family=Roboto:wght@400;500;700&family=Source+Code+Pro:wght@400;600&family=Ubuntu:wght@400;500;700&family=Work+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
@@ -16,7 +16,7 @@
 <body>
     <div class="sidebar">
         <div class="logo">
-            <span>🟣</span> Appu's Personal App
+            <span>🟣</span> Axolotl
         </div>
         <nav>
             <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
@@ -183,10 +183,105 @@
         </div>
     </div>
 
+    <!-- Modal for Project Creation/Edit -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProjectModal()">&times;</span>
+            <h2 id="projectModalTitle">New Project</h2>
+            <form id="projectForm" style="margin-top: 20px;">
+                <input type="hidden" id="projectId">
+                <div class="input-group">
+                    <input type="text" id="projectName" placeholder="Project Name" required>
+                </div>
+                <div class="input-group">
+                    <textarea id="projectDescription" placeholder="Description" rows="3"></textarea>
+                </div>
+                <div class="input-group">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Start Date</label>
+                    <input type="date" id="projectStartDate" required>
+                </div>
+                <div class="input-group">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">End Date</label>
+                    <input type="date" id="projectEndDate" required>
+                </div>
+                <div class="input-group">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Status</label>
+                    <select id="projectStatus" required>
+                        <option value="Yet to Start">Yet to Start</option>
+                        <option value="Work In progress">Work In progress</option>
+                        <option value="On-Hold">On-Hold</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Delayed">Delayed</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Save Project</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Project Task Creation/Edit -->
+    <div id="projectTaskModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProjectTaskModal()">&times;</span>
+            <h2 id="projectTaskModalTitle">New Task</h2>
+            <form id="projectTaskForm" style="margin-top: 20px;">
+                <input type="hidden" id="projectTaskProjectId">
+                <input type="hidden" id="projectTaskTaskId">
+                <input type="hidden" id="projectTaskParentId">
+                <div class="input-group">
+                    <input type="text" id="projectTaskName" placeholder="Task Name" required>
+                </div>
+                <div class="input-group">
+                    <textarea id="projectTaskComments" placeholder="Comments" rows="3"></textarea>
+                </div>
+                <div class="input-group">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Start Date</label>
+                    <input type="date" id="projectTaskStartDate" required>
+                </div>
+                <div class="input-group">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">End Date</label>
+                    <input type="date" id="projectTaskEndDate" required>
+                </div>
+                <div class="input-group" id="projectTaskStatusGroup" style="display: none;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Status</label>
+                    <select id="projectTaskStatus">
+                        <option value="Yet to Start">Yet to Start</option>
+                        <option value="Pending">Pending</option>
+                        <option value="wip">In Progress</option>
+                        <option value="Onhold">On Hold</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Save Task</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Project Task Comments -->
+    <div id="projectTaskCommentsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProjectTaskCommentsModal()">&times;</span>
+            <h2 id="projectTaskCommentsModalTitle">Task Comments</h2>
+            <div id="projectTaskCommentsList" class="comments-list">
+                <!-- Comments will be injected here -->
+            </div>
+            <div style="margin-top: 1.5rem;">
+                <div class="input-group">
+                    <input type="text" id="newProjectTaskCommentInput" placeholder="Add a comment...">
+                </div>
+                <button class="btn" id="submitProjectTaskCommentBtn">Post Comment</button>
+            </div>
+        </div>
+    </div>
+
     <!-- FullCalendar JS (v6 includes CSS) -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     {% block scripts %}{% endblock %}
+    
+    <footer class="app-footer">
+        <p>&copy; 2024 Appu Corporation™. All rights reserved.</p>
+    </footer>
 </body>
 
 </html>

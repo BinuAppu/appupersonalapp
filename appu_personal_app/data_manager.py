@@ -12,6 +12,7 @@ DATA_FILE = os.path.join(BASE_DIR, "data.json")
 KB_FILE = os.path.join(BASE_DIR, "knowledgebase.json")
 SECURE_FILE = os.path.join(BASE_DIR, "secure.json")
 USERNAME_FILE = os.path.join(BASE_DIR, "username.json")
+PROJECT_FILE = os.path.join(BASE_DIR, "project.json")
 
 class DataManager:
     def __init__(self, data_file=DATA_FILE):
@@ -486,3 +487,244 @@ class DataManager:
         data['items'] = [i for i in data['items'] if i['id'] != item_id]
         self.save_secure_data(data)
         return True
+
+    # --- Projects ---
+    def load_projects(self):
+        if not os.path.exists(PROJECT_FILE):
+            return []
+        try:
+            with open(PROJECT_FILE, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return []
+
+    def save_projects(self, projects):
+        with open(PROJECT_FILE, 'w') as f:
+            json.dump(projects, f, indent=4)
+
+    def get_all_projects(self):
+        return self.load_projects()
+
+    def add_project(self, name, description, start_date, end_date, status):
+        projects = self.load_projects()
+        project = {
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "description": description,
+            "start_date": start_date,
+            "end_date": end_date,
+            "status": status,
+            "created_at": datetime.now().isoformat(),
+            "tasks": []
+        }
+        projects.append(project)
+        self.save_projects(projects)
+        return project
+
+    def get_project(self, project_id):
+        projects = self.load_projects()
+        for project in projects:
+            if project["id"] == project_id:
+                return project
+        return None
+
+    def update_project(self, project_id, name, description, start_date, end_date, status):
+        projects = self.load_projects()
+        for project in projects:
+            if project["id"] == project_id:
+                # Validate completion - can't complete if tasks aren't completed
+                if status == "Completed":
+                    if not self._are_all_tasks_completed(project):
+                        return {"error": "Cannot complete project. All tasks must be completed first."}
+                
+                project["name"] = name
+                project["description"] = description
+                project["start_date"] = start_date
+                project["end_date"] = end_date
+                project["status"] = status
+                self.save_projects(projects)
+                return project
+        return None
+
+    def delete_project(self, project_id):
+        projects = self.load_projects()
+        projects = [p for p in projects if p["id"] != project_id]
+        self.save_projects(projects)
+        return True
+
+    def add_project_task(self, project_id, task_name, comments, start_date, end_date, parent_task_id=None):
+        projects = self.load_projects()
+        for project in projects:
+            if project["id"] == project_id:
+                task = {
+                    "id": str(uuid.uuid4()),
+                    "name": task_name,
+                    "comments": comments,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "status": "Yet to Start",
+                    "parent_id": parent_task_id,
+                    "subtasks": [],
+                    "created_at": datetime.now().isoformat(),
+                    "task_comments": []
+                }
+                # Validate dates against parent or project
+                p_start, p_end = self.get_parent_dates_for_validation(project, parent_task_id)
+                if p_start and p_end:
+                    if start_date < p_start or end_date > p_end:
+                         return {"error": f"Task dates must be within parent/project range ({p_start} - {p_end})"}
+
+                if parent_task_id:
+                    # Find parent task and add as subtask
+                    parent = self._find_task_in_project(project, parent_task_id)
+                    if parent:
+                        parent["subtasks"].append(task)
+                else:
+                    project["tasks"].append(task)
+                self.save_projects(projects)
+                return task
+        return None
+
+    def get_parent_dates_for_validation(self, project, parent_task_id):
+        if not parent_task_id:
+            return project.get("start_date"), project.get("end_date")
+        
+        parent = self._find_task_in_project(project, parent_task_id)
+        if parent:
+            return parent.get("start_date"), parent.get("end_date")
+        return None, None
+
+    def _find_task_in_project(self, project, task_id):
+        """Recursively find a task in project's task tree"""
+        for task in project["tasks"]:
+            if task["id"] == task_id:
+                return task
+            found = self._find_task_in_subtasks(task, task_id)
+            if found:
+                return found
+        return None
+
+    def get_parent_task_dates(self, project_id, task_id):
+        """Get parent task's start and end dates for a given task"""
+        project = self.get_project(project_id)
+        if not project:
+            return None, None
+        
+        task = self._find_task_in_project(project, task_id)
+        if not task or not task.get("parent_id"):
+            # Top-level task, return project dates
+            return project.get("start_date"), project.get("end_date")
+        
+        # Find parent task
+        parent = self._find_task_in_project(project, task["parent_id"])
+        if parent:
+            return parent.get("start_date"), parent.get("end_date")
+        
+        return None, None
+
+    def _find_task_in_subtasks(self, parent_task, task_id):
+        """Recursively search in subtasks"""
+        for subtask in parent_task.get("subtasks", []):
+            if subtask["id"] == task_id:
+                return subtask
+            found = self._find_task_in_subtasks(subtask, task_id)
+            if found:
+                return found
+        return None
+
+    def _are_all_children_completed(self, task):
+        """Check if all subtasks of a task are completed"""
+        if not task.get("subtasks"):
+            return True
+        for subtask in task["subtasks"]:
+            if subtask.get("status") != "Completed":
+                return False
+            # Recursively check nested subtasks
+            if not self._are_all_children_completed(subtask):
+                return False
+        return True
+
+    def _are_all_tasks_completed(self, project):
+        """Check if all tasks in a project are completed"""
+        if not project.get("tasks"):
+            return True
+        for task in project["tasks"]:
+            if task.get("status") != "Completed":
+                return False
+            # Also check that all subtasks are completed
+            if not self._are_all_children_completed(task):
+                return False
+        return True
+
+    def update_project_task(self, project_id, task_id, task_name=None, comments=None, start_date=None, end_date=None, status=None):
+        projects = self.load_projects()
+        for project in projects:
+            if project["id"] == project_id:
+                task = self._find_task_in_project(project, task_id)
+                if task:
+                    # Validate completion - can't complete if children aren't completed
+                    if status == "Completed":
+                        if not self._are_all_children_completed(task):
+                            return {"error": "Cannot complete task. All subtasks must be completed first."}
+                    
+                    if task_name is not None:
+                        task["name"] = task_name
+                    if comments is not None:
+                        task["comments"] = comments
+                    if start_date is not None:
+                        task["start_date"] = start_date
+                    if end_date is not None:
+                        task["end_date"] = end_date
+                    if status is not None:
+                        task["status"] = status
+                    self.save_projects(projects)
+                    return task
+        return None
+
+    def delete_project_task(self, project_id, task_id):
+        projects = self.load_projects()
+        for project in projects:
+            if project["id"] == project_id:
+                # Remove from top-level tasks
+                project["tasks"] = [t for t in project["tasks"] if t["id"] != task_id]
+                # Remove from subtasks recursively
+                for task in project["tasks"]:
+                    self._remove_task_from_subtasks(task, task_id)
+                self.save_projects(projects)
+                return True
+        return False
+
+    def _remove_task_from_subtasks(self, parent_task, task_id):
+        """Recursively remove task from subtasks"""
+        if "subtasks" in parent_task:
+            parent_task["subtasks"] = [t for t in parent_task["subtasks"] if t["id"] != task_id]
+            for subtask in parent_task["subtasks"]:
+                self._remove_task_from_subtasks(subtask, task_id)
+
+    def add_project_task_comment(self, project_id, task_id, text):
+        projects = self.load_projects()
+        for project in projects:
+            if project["id"] == project_id:
+                task = self._find_task_in_project(project, task_id)
+                if task:
+                    comment = {
+                        "text": text,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    if "task_comments" not in task:
+                        task["task_comments"] = []
+                    task["task_comments"].append(comment)
+                    self.save_projects(projects)
+                    return comment
+        return None
+
+    def update_project_task_status(self, project_id, task_id, status):
+        projects = self.load_projects()
+        for project in projects:
+            if project["id"] == project_id:
+                task = self._find_task_in_project(project, task_id)
+                if task:
+                    task["status"] = status
+                    self.save_projects(projects)
+                    return True
+        return False
