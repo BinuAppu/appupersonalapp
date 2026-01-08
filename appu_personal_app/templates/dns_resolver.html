@@ -1,0 +1,463 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container dns-container">
+    <div class="back-link">
+        <a href="/small-apps">← Back to Small Apps</a>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-header">
+            <div class="tool-icon">🌐</div>
+            <div class="tool-title">
+                <h1>DNS Resolver</h1>
+                <p>Query DNS records for any domain or IP</p>
+            </div>
+        </div>
+
+        <div class="tool-body">
+            <div class="input-grid">
+                <div class="input-section">
+                    <label for="dns-target">Domain or IP Address</label>
+                    <input type="text" id="dns-target" placeholder="e.g. google.com or 8.8.8.8">
+                </div>
+
+                <div class="input-section">
+                    <label for="dns-server">Custom DNS Server (Optional)</label>
+                    <input type="text" id="dns-server" placeholder="e.g. 8.8.8.8 (Leave blank for local)">
+                </div>
+
+                <div class="input-section">
+                    <label for="dns-type">Record Type</label>
+                    <select id="dns-type">
+                        <option value="A">A (IPv4 Address)</option>
+                        <option value="AAAA">AAAA (IPv6 Address)</option>
+                        <option value="MX">MX (Mail Exchange)</option>
+                        <option value="TXT">TXT (Text)</option>
+                        <option value="CNAME">CNAME (Canonical Name)</option>
+                        <option value="NS">NS (Name Server)</option>
+                        <option value="SOA">SOA (Start of Authority)</option>
+                        <option value="PTR">PTR (Pointer)</option>
+                        <option value="SRV">SRV (Service)</option>
+                        <option value="CAA">CAA (Certification Authority Authorization)</option>
+                        <option value="ALL">ALL (Query common types)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="resolve-btn" class="primary-btn" onclick="resolveDNS()">
+                    <i class="fas fa-search"></i> Resolve Records
+                </button>
+            </div>
+
+            <div id="loading-spinner" class="spinner-container" style="display: none;">
+                <div class="spinner"></div>
+                <p>Querying DNS records...</p>
+            </div>
+
+            <div class="result-section" id="dns-result-container" style="display: none;">
+                <div class="result-header">
+                    <h3>Resolution Results</h3>
+                    <button class="copy-btn secondary" onclick="copyResults()">
+                        <i class="fas fa-copy"></i> Copy All
+                    </button>
+                </div>
+                <div class="results-table-wrapper">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dns-results-body">
+                            <!-- Results will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tool-footer">
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <p>DNS resolution is performed on the server. If a custom DNS server is provided, the query will be
+                    routed through it.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dns-container {
+        padding: 2rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .back-link {
+        margin-bottom: 2rem;
+    }
+
+    .back-link a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+
+    .back-link a:hover {
+        color: var(--primary-color);
+    }
+
+    .tool-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: var(--box-shadow);
+        backdrop-filter: blur(20px);
+    }
+
+    .tool-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1.5rem;
+    }
+
+    .tool-icon {
+        font-size: 2.5rem;
+        background: var(--bg-color);
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .tool-title h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: var(--text-color);
+    }
+
+    .tool-title p {
+        margin: 0.2rem 0 0 0;
+        color: var(--text-muted);
+    }
+
+    .tool-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .input-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .input-section:first-child {
+        grid-column: span 2;
+    }
+
+    .input-section label {
+        display: block;
+        margin-bottom: 0.8rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .input-section input,
+    .input-section select {
+        width: 100%;
+        padding: 1rem 1.2rem;
+        border-radius: 12px;
+        border: 1px solid var(--input-border);
+        background: var(--input-bg);
+        color: var(--text-color);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+
+    .input-section input:focus,
+    .input-section select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(108, 93, 211, 0.1);
+    }
+
+    .actions {
+        display: flex;
+        justify-content: center;
+    }
+
+    .primary-btn {
+        padding: 1rem 2.5rem;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .primary-btn:hover {
+        background: #5b4dbf;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(108, 93, 211, 0.2);
+    }
+
+    .spinner-container {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--input-border);
+        border-top: 4px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .result-section {
+        background: var(--bg-color);
+        border-radius: 20px;
+        padding: 1.5rem;
+        animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .result-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: var(--text-color);
+    }
+
+    .results-table-wrapper {
+        max-height: 400px;
+        overflow-y: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .results-table th {
+        background: var(--card-bg);
+        padding: 1rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        position: sticky;
+        top: 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .results-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-color);
+        font-family: 'Source Code Pro', monospace;
+        font-size: 0.9rem;
+        word-break: break-all;
+    }
+
+    .results-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .type-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: rgba(108, 93, 211, 0.1);
+        color: var(--primary-color);
+    }
+
+    .copy-btn.secondary {
+        background: var(--input-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .copy-btn.secondary:hover {
+        background: var(--input-border);
+    }
+
+    .tool-footer {
+        margin-top: 2.5rem;
+    }
+
+    .info-box {
+        display: flex;
+        gap: 1rem;
+        background: rgba(108, 93, 211, 0.05);
+        padding: 1.2rem;
+        border-radius: 16px;
+        border: 1px solid rgba(108, 93, 211, 0.1);
+    }
+
+    .info-box i {
+        color: var(--primary-color);
+        margin-top: 0.2rem;
+    }
+
+    .info-box p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+        .input-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .input-section:first-child {
+            grid-column: span 1;
+        }
+    }
+</style>
+
+<script>
+    async function resolveDNS() {
+        const target = document.getElementById('dns-target').value.trim();
+        const server = document.getElementById('dns-server').value.trim();
+        const type = document.getElementById('dns-type').value;
+
+        if (!target) {
+            alert('Please enter a Domain or IP address');
+            return;
+        }
+
+        const btn = document.getElementById('resolve-btn');
+        const spinner = document.getElementById('loading-spinner');
+        const resultContainer = document.getElementById('dns-result-container');
+        const resultsBody = document.getElementById('dns-results-body');
+
+        btn.disabled = true;
+        spinner.style.display = 'block';
+        resultContainer.style.display = 'none';
+        resultsBody.innerHTML = '';
+
+        try {
+            const response = await fetch('/api/dns/resolve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    target: target,
+                    dns_server: server,
+                    record_type: type
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+            } else if (data.results && data.results.length > 0) {
+                data.results.forEach(res => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><span class="type-badge">${res.type}</span></td>
+                        <td>${res.value}</td>
+                    `;
+                    resultsBody.appendChild(row);
+                });
+                resultContainer.style.display = 'block';
+            } else {
+                resultsBody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-muted);">No records found.</td></tr>';
+                resultContainer.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('An error occurred while resolving DNS.');
+        } finally {
+            btn.disabled = false;
+            spinner.style.display = 'none';
+        }
+    }
+
+    function copyResults() {
+        const results = [];
+        const rows = document.querySelectorAll('#dns-results-body tr');
+        rows.forEach(row => {
+            const type = row.querySelector('.type-badge').innerText;
+            const value = row.querySelectorAll('td')[1].innerText;
+            results.push(`${type}: ${value}`);
+        });
+
+        if (results.length === 0) return;
+
+        navigator.clipboard.writeText(results.join('\n')).then(() => {
+            const btn = document.querySelector('.copy-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            btn.style.background = '#4cd137';
+            btn.style.color = 'white';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+                btn.style.color = '';
+            }, 2000);
+        });
+    }
+</script>
+{% endblock %}

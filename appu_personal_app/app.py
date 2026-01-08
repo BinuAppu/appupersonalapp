@@ -274,6 +274,46 @@ def generate_otp():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+@app.route('/small-apps/dns')
+def dns_resolver():
+    return render_template('dns_resolver.html')
+
+@app.route('/api/dns/resolve', methods=['POST'])
+def resolve_dns():
+    import dns.resolver
+    data = request.json
+    target = data.get('target')
+    dns_server = data.get('dns_server')
+    record_type = data.get('record_type', 'A')
+
+    if not target:
+        return jsonify({"error": "Target (DNS/IP) required"}), 400
+
+    resolver = dns.resolver.Resolver()
+    if dns_server:
+        resolver.nameservers = [dns_server]
+
+    types_to_query = [record_type]
+    if record_type == 'ALL':
+        types_to_query = ['A', 'AAAA', 'MX', 'TXT', 'CNAME', 'NS', 'SOA']
+
+    results = []
+    for rtype in types_to_query:
+        try:
+            answers = resolver.resolve(target, rtype)
+            for rdata in answers:
+                results.append({
+                    "type": rtype,
+                    "value": str(rdata)
+                })
+        except Exception as e:
+            if record_type != 'ALL':
+                return jsonify({"error": str(e)}), 400
+            # For 'ALL', we just skip types that don't exist
+            continue
+
+    return jsonify({"results": results})
+
 @app.route('/api/settings/username', methods=['GET', 'POST'])
 def handle_username():
     if request.method == 'POST':
