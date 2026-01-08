@@ -31,6 +31,9 @@
             <a href="/secure" class="nav-link {% if request.path == '/secure' %}active{% endif %}">
                 <span>🔒</span> Secure
             </a>
+            <a href="/small-apps" class="nav-link {% if request.path == '/small-apps' or request.path.startswith('/small-apps/') %}active{% endif %}">
+                <span>🚀</span> Small Apps
+            </a>
             <a href="/all" class="nav-link {% if request.path == '/all' %}active{% endif %}">
                 <span>📝</span> Data Base
             </a>

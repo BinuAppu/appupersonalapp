@@ -253,6 +253,27 @@ def delete_secure_item(item_id):
 def settings():
     return render_template('settings.html', user_name=data_manager.get_user_name())
 
+@app.route('/small-apps')
+def small_apps():
+    return render_template('small_apps.html')
+
+@app.route('/small-apps/otp')
+def otp_generator():
+    return render_template('otp_generator.html')
+
+@app.route('/api/otp/generate', methods=['POST'])
+def generate_otp():
+    import pyotp
+    data = request.json
+    key = data.get('key')
+    if not key:
+        return jsonify({"error": "Key required"}), 400
+    try:
+        totp = pyotp.TOTP(key)
+        return jsonify({"otp": totp.now(), "remaining": 30 - (int(time.time()) % 30)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 @app.route('/api/settings/username', methods=['GET', 'POST'])
 def handle_username():
     if request.method == 'POST':
