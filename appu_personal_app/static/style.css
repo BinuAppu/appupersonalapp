@@ -239,6 +239,22 @@
 
 /* --- New 30 Themes --- */
 
+[data-theme='inferno-hacker'] {
+    /* Inferno Hacker - Halloween, Devil, Horror, Hacker, Cyber */
+    --primary-color: #ff0000;
+    --secondary-color: #00ff41;
+    --accent-color: #ff8c00;
+    --bg-color: #050505;
+    --text-color: #e0e0e0;
+    --text-muted: #888888;
+    --card-bg: rgba(15, 0, 0, 0.85);
+    --nav-bg: #0a0000;
+    --box-shadow: 0px 0px 15px rgba(255, 0, 0, 0.3);
+    --border-color: #330000;
+    --input-bg: #0f0000;
+    --input-border: #ff0000;
+}
+
 [data-theme='atom-one-dark'] {
     --primary-color: #61afef;
     --secondary-color: #98c379;
@@ -737,8 +753,37 @@ body {
     color: var(--primary-color);
     margin-bottom: 2rem;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    text-align: center;
+    gap: 5px;
+}
+
+.logo-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    background: white;
+    /* New image has white background */
+    border: 2px solid var(--primary-color);
+    box-shadow: var(--box-shadow);
+}
+
+.logo-text {
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.slogan {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: normal;
+    margin-top: -5px;
 }
 
 .nav-link {
@@ -1022,6 +1067,7 @@ textarea:focus {
     /* white-space: nowrap; - Removed for wrapping */
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1359,6 +1405,7 @@ textarea:focus {
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
 }
 

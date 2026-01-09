@@ -16,7 +16,9 @@
 <body>
     <div class="sidebar">
         <div class="logo">
-            <span>🟣</span> Axolotl
+            <img src="{{ url_for('static', filename='axolotl_logo.png') }}" alt="Axolotl Logo" class="logo-img">
+            <div class="logo-text">Axolotl</div>
+            <div class="slogan">Built to Regenerate</div>
         </div>
         <nav>
             <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
@@ -31,7 +33,8 @@
             <a href="/secure" class="nav-link {% if request.path == '/secure' %}active{% endif %}">
                 <span>🔒</span> Secure
             </a>
-            <a href="/small-apps" class="nav-link {% if request.path == '/small-apps' or request.path.startswith('/small-apps/') %}active{% endif %}">
+            <a href="/small-apps"
+                class="nav-link {% if request.path == '/small-apps' or request.path.startswith('/small-apps/') %}active{% endif %}">
                 <span>🚀</span> Small Apps
             </a>
             <a href="/all" class="nav-link {% if request.path == '/all' %}active{% endif %}">
@@ -281,7 +284,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     {% block scripts %}{% endblock %}
-    
+
     <footer class="app-footer">
         <p>&copy; 2024 Appu Corporation™. All rights reserved.</p>
     </footer>

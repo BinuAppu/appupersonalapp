@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'darcula', 'dracula-soft', 'github-dark', 'github-light', 'jellybeans',
                 'material-darker', 'material-lighter', 'material-ocean', 'material-palenight',
                 'monokai-pro', 'night-owl', 'shades-of-purple', 'synthwave-84',
-                'tokyo-night', 'zenburn', 'solarized-ocean', 'deep-purple', 'matrix-green'
+                'tokyo-night', 'zenburn', 'solarized-ocean', 'deep-purple', 'matrix-green',
+                'inferno-hacker'
             ];
             if (validThemes.includes(theme)) {
                 schemeSelect.value = theme;
