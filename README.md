@@ -15,10 +15,8 @@ py app.py
 Install required Modules
 ```
 Windows :
-  py -m pip install flask
-  py -m pip install cryptography
+  py -m pip install -r requirements.txt
 
 Linux :
-  python3 -m pip install flask
-  python3 -m pip install cryptography
+  python3 -m pip install -r requirements.txt
 ```
