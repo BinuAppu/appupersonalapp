@@ -59,9 +59,15 @@ class DataManager:
             return default_settings
         try:
             with open(SETTINGS_FILE, 'r') as f:
-                return json.load(f)
+                settings = json.load(f)
+                if "section_order" not in settings:
+                    settings["section_order"] = ["tasks", "projects", "reminders"]
+                return settings
         except (json.JSONDecodeError, IOError):
-            return {"colors": {"nearing_2_weeks": "#F4C430", "nearing_1_week": "#E53935", "overdue": "#8B0000"}}
+            return {
+                "colors": {"nearing_2_weeks": "#F4C430", "nearing_1_week": "#E53935", "overdue": "#8B0000"},
+                "section_order": ["tasks", "projects", "reminders"]
+            }
 
     def save_settings(self, settings):
         with open(SETTINGS_FILE, 'w') as f:

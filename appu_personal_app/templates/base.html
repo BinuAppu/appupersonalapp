@@ -14,7 +14,13 @@
 </head>
 
 <body>
-    <div class="sidebar">
+    <button class="hamburger" id="hamburgerBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="sidebar">
         <div class="logo">
             <img src="{{ url_for('static', filename='axolotl_logo.png') }}" alt="Axolotl Logo" class="logo-img">
             <div class="logo-text">Axolotl</div>

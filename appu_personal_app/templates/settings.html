@@ -8,284 +8,294 @@
     </div>
 </div>
 
-<div class="settings-container"
-    style="max-width: 800px; margin: 0 auto; padding: 2rem; background: var(--card-bg); border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+<div class="settings-container" style="max-width: 900px; margin: 0 auto; padding: 1rem;">
 
     <!-- User Profile Section -->
-    <div class="settings-section" style="margin-bottom: 3rem;">
-        <h2
-            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-            User Profile</h2>
-
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Nick Name</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">What should we call you?</p>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="userNameInput" value="{{ user_name }}" placeholder="Enter Nickname"
-                    style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); width: 200px;">
-                <button class="btn" onclick="saveUserName()">Save</button>
+    <div class="settings-section active">
+        <div class="settings-section-header" onclick="toggleSettingsSection(this.parentElement)">
+            <h2>User Profile</h2>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="settings-section-content">
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Nick Name</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">What should we call you?</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="userNameInput" value="{{ user_name }}" placeholder="Enter Nickname"
+                        style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); width: 200px;">
+                    <button class="btn" onclick="saveUserName()">Save</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Appearance Section -->
-    <div class="settings-section" style="margin-bottom: 3rem;">
-        <h2
-            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-            Appearance</h2>
-
-        <!-- Theme Toggle -->
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Theme</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Switch between light and dark modes.
-                </p>
-            </div>
-            <div class="toggle-group">
-                <label>
-                    <input type="radio" name="settingsTheme" id="settingsLightTheme" value="light"
-                        onchange="setTheme('light')">
-                    <span style="font-size: 1.2rem; cursor: pointer;">☀️</span>
-                </label>
-                <label>
-                    <input type="radio" name="settingsTheme" id="settingsDarkTheme" value="dark"
-                        onchange="setTheme('dark')">
-                    <span style="font-size: 1.2rem; cursor: pointer;">🌙</span>
-                </label>
-            </div>
+    <div class="settings-section">
+        <div class="settings-section-header" onclick="toggleSettingsSection(this.parentElement)">
+            <h2>Appearance</h2>
+            <span class="chevron">▼</span>
         </div>
-
-        <!-- Color Scheme -->
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Color Scheme</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Choose a vibrant color palette.</p>
+        <div class="settings-section-content" style="padding-top: 1rem;">
+            <!-- Theme Toggle -->
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Theme</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Switch between light and dark
+                        modes.</p>
+                </div>
+                <div class="toggle-group">
+                    <label>
+                        <input type="radio" name="settingsTheme" id="settingsLightTheme" value="light"
+                            onchange="setTheme('light')">
+                        <span style="font-size: 1.2rem; cursor: pointer;">☀️</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="settingsTheme" id="settingsDarkTheme" value="dark"
+                            onchange="setTheme('dark')">
+                        <span style="font-size: 1.2rem; cursor: pointer;">🌙</span>
+                    </label>
+                </div>
             </div>
-            <select id="colorSchemeSelect" onchange="changeColorScheme(this.value)"
-                style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
-                <option value="default">Default (Purple/Pink)</option>
-                <option value="hackthebox">Hackthebox (Green/Black)</option>
-                <option value="dracula">Dracula (Purple/Dark)</option>
-                <option value="ocean">Ocean (Blue/Teal)</option>
-                <option value="solarized-light">Solarized Light</option>
-                <option value="solarized-dark">Solarized Dark</option>
-                <option value="monokai">Monokai</option>
-                <option value="nord">Nord</option>
-                <option value="gruvbox-light">Gruvbox Light</option>
-                <option value="gruvbox-dark">Gruvbox Dark</option>
-                <option value="cyberpunk">Cyberpunk</option>
-                <option value="forest">Forest</option>
-                <option value="sunset">Sunset</option>
-                <option value="midnight">Midnight</option>
-                <option value="atom-one-dark">Atom One Dark</option>
-                <option value="atom-one-light">Atom One Light</option>
-                <option value="ayu-dark">Ayu Dark</option>
-                <option value="ayu-light">Ayu Light</option>
-                <option value="ayu-mirage">Ayu Mirage</option>
-                <option value="base16-tomorrow-dark">Base16 Tomorrow Dark</option>
-                <option value="base16-tomorrow-light">Base16 Tomorrow Light</option>
-                <option value="catppuccin-latte">Catppuccin Latte</option>
-                <option value="catppuccin-frappe">Catppuccin Frappe</option>
-                <option value="catppuccin-macchiato">Catppuccin Macchiato</option>
-                <option value="catppuccin-mocha">Catppuccin Mocha</option>
-                <option value="cobalt2">Cobalt2</option>
-                <option value="darcula">Darcula</option>
-                <option value="dracula-soft">Dracula Soft</option>
-                <option value="github-dark">GitHub Dark</option>
-                <option value="github-light">GitHub Light</option>
-                <option value="jellybeans">Jellybeans</option>
-                <option value="material-darker">Material Darker</option>
-                <option value="material-lighter">Material Lighter</option>
-                <option value="material-ocean">Material Ocean</option>
-                <option value="material-palenight">Material Palenight</option>
-                <option value="monokai-pro">Monokai Pro</option>
-                <option value="night-owl">Night Owl</option>
-                <option value="shades-of-purple">Shades of Purple</option>
-                <option value="synthwave-84">Synthwave '84</option>
-                <option value="tokyo-night">Tokyo Night</option>
-                <option value="zenburn">Zenburn</option>
-                <option value="solarized-ocean">Solarized Ocean</option>
-                <option value="deep-purple">Deep Purple</option>
-                <option value="matrix-green">Matrix Green</option>
-                <option value="inferno-hacker">Inferno Hacker (Horror/Cyber)</option>
-            </select>
-        </div>
 
-        <!-- Font Family -->
-        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Font Family</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Select your preferred typography.</p>
+            <!-- Color Scheme -->
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Color Scheme</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Choose a vibrant color palette.
+                    </p>
+                </div>
+                <select id="colorSchemeSelect" onchange="changeColorScheme(this.value)"
+                    style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                    <option value="default">Default</option>
+                    <option value="hackthebox">Hackthebox</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="ocean">Ocean</option>
+                    <option value="solarized-light">Solarized Light</option>
+                    <option value="solarized-dark">Solarized Dark</option>
+                    <option value="monokai">Monokai</option>
+                    <option value="nord">Nord</option>
+                    <option value="gruvbox-light">Gruvbox Light</option>
+                    <option value="gruvbox-dark">Gruvbox Dark</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                    <option value="forest">Forest</option>
+                    <option value="sunset">Sunset</option>
+                    <option value="midnight">Midnight</option>
+                    <option value="atom-one-dark">Atom One Dark</option>
+                    <option value="atom-one-light">Atom One Light</option>
+                    <option value="ayu-dark">Ayu Dark</option>
+                    <option value="ayu-light">Ayu Light</option>
+                    <option value="ayu-mirage">Ayu Mirage</option>
+                    <option value="base16-tomorrow-dark">Base16 Tomorrow Dark</option>
+                    <option value="base16-tomorrow-light">Base16 Tomorrow Light</option>
+                    <option value="catppuccin-latte">Catppuccin Latte</option>
+                    <option value="catppuccin-frappe">Catppuccin Frappe</option>
+                    <option value="catppuccin-macchiato">Catppuccin Macchiato</option>
+                    <option value="catppuccin-mocha">Catppuccin Mocha</option>
+                    <option value="cobalt2">Cobalt2</option>
+                    <option value="darcula">Darcula</option>
+                    <option value="dracula-soft">Dracula Soft</option>
+                    <option value="github-dark">GitHub Dark</option>
+                    <option value="github-light">GitHub Light</option>
+                    <option value="jellybeans">Jellybeans</option>
+                    <option value="material-darker">Material Darker</option>
+                    <option value="material-lighter">Material Lighter</option>
+                    <option value="material-ocean">Material Ocean</option>
+                    <option value="material-palenight">Material Palenight</option>
+                    <option value="monokai-pro">Monokai Pro</option>
+                    <option value="night-owl">Night Owl</option>
+                    <option value="shades-of-purple">Shades of Purple</option>
+                    <option value="synthwave-84">Synthwave '84</option>
+                    <option value="tokyo-night">Tokyo Night</option>
+                    <option value="zenburn">Zenburn</option>
+                    <option value="solarized-ocean">Solarized Ocean</option>
+                    <option value="deep-purple">Deep Purple</option>
+                    <option value="matrix-green">Matrix Green</option>
+                    <option value="inferno-hacker">Inferno Hacker</option>
+                </select>
             </div>
-            <select id="fontFamilySelect" onchange="changeFontFamily(this.value)"
-                style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
-                <option value="'Inter', sans-serif">Inter (Default)</option>
-                <option value="'Roboto', sans-serif">Roboto</option>
-                <option value="'Open Sans', sans-serif">Open Sans</option>
-                <option value="'Lato', sans-serif">Lato</option>
-                <option value="'Poppins', sans-serif">Poppins</option>
-                <option value="'Montserrat', sans-serif">Montserrat</option>
-                <option value="'Ubuntu', sans-serif">Ubuntu</option>
-                <option value="'Playfair Display', serif">Playfair Display</option>
-                <option value="'Merriweather', serif">Merriweather</option>
-                <option value="'Source Code Pro', monospace">Source Code Pro</option>
-                <option value="'Nunito', sans-serif">Nunito</option>
-                <option value="'Raleway', sans-serif">Raleway</option>
-                <option value="'Quicksand', sans-serif">Quicksand</option>
-                <option value="'Inconsolata', monospace">Inconsolata</option>
-                <option value="'Work Sans', sans-serif">Work Sans</option>
-            </select>
-        </div>
-    </div>
 
-    <!-- Data Management Section -->
-    <div class="settings-section" style="margin-bottom: 3rem;">
-        <h2
-            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-            Data Management</h2>
-
-        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Backup Data</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Create a backup of all your JSON data
-                    files.</p>
+            <!-- Font Family -->
+            <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Font Family</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Select your preferred typography.
+                    </p>
+                </div>
+                <select id="fontFamilySelect" onchange="changeFontFamily(this.value)"
+                    style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                    <option value="'Inter', sans-serif">Inter</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Poppins', sans-serif">Poppins</option>
+                    <option value="'Montserrat', sans-serif">Montserrat</option>
+                    <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                    <option value="'Playfair Display', serif">Playfair Display</option>
+                    <option value="'Lato', sans-serif">Lato</option>
+                    <option value="'Merriweather', serif">Merriweather</option>
+                    <option value="'Nunito', sans-serif">Nunito</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Quicksand', sans-serif">Quicksand</option>
+                    <option value="'Raleway', sans-serif">Raleway</option>
+                    <option value="'Ubuntu', sans-serif">Ubuntu</option>
+                    <option value="'Work Sans', sans-serif">Work Sans</option>
+                    <option value="'Inconsolata', monospace">Inconsolata</option>
+                </select>
             </div>
-            <button class="btn" onclick="triggerBackup()" style="background: var(--primary-color);">Backup Now</button>
         </div>
     </div>
 
     <!-- Dashboard Coloring Section -->
-    <div class="settings-section" style="margin-bottom: 3rem;">
-        <h2
-            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-            Dashboard Coloring</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Set colors for items based on
-            their deadlines.</p>
-
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Nearing 2 Weeks</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Items due within 14 days.</p>
-            </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div id="preview2Weeks"
-                    style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);"></div>
-                <input type="color" id="color2Weeks" oninput="updateColorPreviews()"
-                    style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
-            </div>
+    <div class="settings-section">
+        <div class="settings-section-header" onclick="toggleSettingsSection(this.parentElement)">
+            <h2>Dashboard Coloring</h2>
+            <span class="chevron">▼</span>
         </div>
+        <div class="settings-section-content">
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Set colors for items based on
+                their deadlines.</p>
 
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Nearing 1 Week</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Items due within 7 days.</p>
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Nearing 2 Weeks</h4>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div id="preview2Weeks"
+                        style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);">
+                    </div>
+                    <input type="color" id="color2Weeks" oninput="updateColorPreviews()"
+                        style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+                </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div id="preview1Week"
-                    style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);"></div>
-                <input type="color" id="color1Week" oninput="updateColorPreviews()"
-                    style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
-            </div>
-        </div>
 
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Overdue</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Items past their deadline.</p>
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Nearing 1 Week</h4>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div id="preview1Week"
+                        style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);">
+                    </div>
+                    <input type="color" id="color1Week" oninput="updateColorPreviews()"
+                        style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+                </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div id="previewOverdue"
-                    style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);"></div>
-                <input type="color" id="colorOverdue" oninput="updateColorPreviews()"
-                    style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
-            </div>
-        </div>
 
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn" onclick="saveColorSettings()">Save Color Settings</button>
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Overdue</h4>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div id="previewOverdue"
+                        style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);">
+                    </div>
+                    <input type="color" id="colorOverdue" oninput="updateColorPreviews()"
+                        style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="btn" onclick="saveColorSettings()">Save Color Settings</button>
+            </div>
         </div>
     </div>
 
     <!-- Dashboard Layout Section -->
-    <div class="settings-section" style="margin-bottom: 3rem;">
-        <h2
-            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-            Dashboard Layout</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Rearrange the order of sections
-            on
-            your dashboard.</p>
-
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Top Section</h4>
-            </div>
-            <select id="sectionOrder0" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
-                <option value="tasks">Active Tasks</option>
-                <option value="projects">Projects</option>
-                <option value="reminders">Reminders</option>
-            </select>
+    <div class="settings-section">
+        <div class="settings-section-header" onclick="toggleSettingsSection(this.parentElement)">
+            <h2>Dashboard Layout</h2>
+            <span class="chevron">▼</span>
         </div>
+        <div class="settings-section-content">
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Rearrange the order of
+                sections on your dashboard.</p>
 
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Middle Section</h4>
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4>Top Section</h4>
+                <select id="sectionOrder0" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
+                    <option value="tasks">Active Tasks</option>
+                    <option value="projects">Projects</option>
+                    <option value="reminders">Reminders</option>
+                </select>
             </div>
-            <select id="sectionOrder1" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
-                <option value="tasks">Active Tasks</option>
-                <option value="projects">Projects</option>
-                <option value="reminders">Reminders</option>
-            </select>
-        </div>
 
-        <div class="setting-item"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Bottom Section</h4>
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4>Middle Section</h4>
+                <select id="sectionOrder1" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
+                    <option value="tasks">Active Tasks</option>
+                    <option value="projects">Projects</option>
+                    <option value="reminders">Reminders</option>
+                </select>
             </div>
-            <select id="sectionOrder2" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
-                <option value="tasks">Active Tasks</option>
-                <option value="projects">Projects</option>
-                <option value="reminders">Reminders</option>
-            </select>
-        </div>
 
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn" onclick="saveLayoutSettings()">Save Layout Settings</button>
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h4>Bottom Section</h4>
+                <select id="sectionOrder2" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
+                    <option value="tasks">Active Tasks</option>
+                    <option value="projects">Projects</option>
+                    <option value="reminders">Reminders</option>
+                </select>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="btn" onclick="saveLayoutSettings()">Save Layout Settings</button>
+            </div>
         </div>
     </div>
 
-    <!-- System Section -->
+    <!-- Data Management Section -->
     <div class="settings-section">
-        <h2
-            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-            System</h2>
-
-        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Application Update</h4>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Check for updates from the
-                    repository.</p>
-            </div>
-            <button class="btn btn-secondary" onclick="checkUpdate()" id="checkUpdateBtn">Check for Update</button>
+        <div class="settings-section-header" onclick="toggleSettingsSection(this.parentElement)">
+            <h2>Data & System</h2>
+            <span class="chevron">▼</span>
         </div>
-        <div id="updateStatus"
-            style="margin-top: 10px; color: var(--text-muted); font-size: 0.9rem; text-align: right;"></div>
+        <div class="settings-section-content">
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Backup Data</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Create a backup of all your JSON
+                        data files.</p>
+                </div>
+                <button class="btn" onclick="triggerBackup()">Backup Now</button>
+            </div>
+
+            <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Application Update</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Check for updates from the
+                        repository.</p>
+                </div>
+                <button class="btn btn-secondary" onclick="checkUpdate()" id="checkUpdateBtn">Check Update</button>
+            </div>
+            <div id="updateStatus"
+                style="margin-top: 10px; color: var(--text-muted); font-size: 0.8rem; text-align: right;"></div>
+        </div>
     </div>
 
 </div>
 
 <!-- Init Settings Script -->
 <script>
+    function toggleSettingsSection(section) {
+        const isActive = section.classList.contains('active');
+        // Close other sections (optional, but requested "compact look" usually implies one at a time)
+        document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+
+        if (!isActive) {
+            section.classList.add('active');
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         // Init properties
         const savedScheme = localStorage.getItem('colorScheme') || 'default';
@@ -363,7 +373,10 @@
             section_order: order
         };
 
-        await persistSettings(settings);
+        if (await persistSettings(settings)) {
+            // Success! Clear local override so server-side order takes effect immediately on reload
+            localStorage.removeItem('dashboardSectionOrder');
+        }
     }
 
     async function persistSettings(settings) {
@@ -375,11 +388,14 @@
             });
             if (res.ok) {
                 alert('Settings saved successfully!');
+                return true;
             } else {
                 alert('Failed to save settings.');
+                return false;
             }
         } catch (e) {
             alert('Error saving settings: ' + e);
+            return false;
         }
     }
 
