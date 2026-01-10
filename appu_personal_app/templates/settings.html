@@ -159,6 +159,111 @@
         </div>
     </div>
 
+    <!-- Dashboard Coloring Section -->
+    <div class="settings-section" style="margin-bottom: 3rem;">
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            Dashboard Coloring</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Set colors for items based on
+            their deadlines.</p>
+
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Nearing 2 Weeks</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Items due within 14 days.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="preview2Weeks"
+                    style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);"></div>
+                <input type="color" id="color2Weeks" oninput="updateColorPreviews()"
+                    style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+            </div>
+        </div>
+
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Nearing 1 Week</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Items due within 7 days.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="preview1Week"
+                    style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);"></div>
+                <input type="color" id="color1Week" oninput="updateColorPreviews()"
+                    style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+            </div>
+        </div>
+
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Overdue</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Items past their deadline.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="previewOverdue"
+                    style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-color);"></div>
+                <input type="color" id="colorOverdue" oninput="updateColorPreviews()"
+                    style="width: 50px; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+            <button class="btn" onclick="saveColorSettings()">Save Color Settings</button>
+        </div>
+    </div>
+
+    <!-- Dashboard Layout Section -->
+    <div class="settings-section" style="margin-bottom: 3rem;">
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            Dashboard Layout</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Rearrange the order of sections
+            on
+            your dashboard.</p>
+
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Top Section</h4>
+            </div>
+            <select id="sectionOrder0" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
+                <option value="tasks">Active Tasks</option>
+                <option value="projects">Projects</option>
+                <option value="reminders">Reminders</option>
+            </select>
+        </div>
+
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Middle Section</h4>
+            </div>
+            <select id="sectionOrder1" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
+                <option value="tasks">Active Tasks</option>
+                <option value="projects">Projects</option>
+                <option value="reminders">Reminders</option>
+            </select>
+        </div>
+
+        <div class="setting-item"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h4 style="margin: 0 0 5px 0;">Bottom Section</h4>
+            </div>
+            <select id="sectionOrder2" class="btn btn-secondary" style="width: 150px; background: var(--input-bg);">
+                <option value="tasks">Active Tasks</option>
+                <option value="projects">Projects</option>
+                <option value="reminders">Reminders</option>
+            </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+            <button class="btn" onclick="saveLayoutSettings()">Save Layout Settings</button>
+        </div>
+    </div>
+
     <!-- System Section -->
     <div class="settings-section">
         <h2
@@ -196,7 +301,87 @@
         } else {
             document.getElementById('settingsDarkTheme').checked = true;
         }
+
+        // Load Settings
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(settings => {
+                if (settings && settings.colors) {
+                    document.getElementById('color2Weeks').value = settings.colors.nearing_2_weeks;
+                    document.getElementById('color1Week').value = settings.colors.nearing_1_week;
+                    document.getElementById('colorOverdue').value = settings.colors.overdue;
+                    updateColorPreviews();
+                }
+                if (settings && settings.section_order) {
+                    document.getElementById('sectionOrder0').value = settings.section_order[0];
+                    document.getElementById('sectionOrder1').value = settings.section_order[1];
+                    document.getElementById('sectionOrder2').value = settings.section_order[2];
+                }
+            });
     });
+
+    function updateColorPreviews() {
+        document.getElementById('preview2Weeks').style.backgroundColor = document.getElementById('color2Weeks').value;
+        document.getElementById('preview1Week').style.backgroundColor = document.getElementById('color1Week').value;
+        document.getElementById('previewOverdue').style.backgroundColor = document.getElementById('colorOverdue').value;
+    }
+
+    async function saveColorSettings() {
+        const settingsRes = await fetch('/api/settings');
+        const currentSettings = await settingsRes.json();
+
+        const settings = {
+            ...currentSettings,
+            colors: {
+                nearing_2_weeks: document.getElementById('color2Weeks').value,
+                nearing_1_week: document.getElementById('color1Week').value,
+                overdue: document.getElementById('colorOverdue').value
+            }
+        };
+
+        await persistSettings(settings);
+    }
+
+    async function saveLayoutSettings() {
+        const order = [
+            document.getElementById('sectionOrder0').value,
+            document.getElementById('sectionOrder1').value,
+            document.getElementById('sectionOrder2').value
+        ];
+
+        // Check for duplicates
+        if (new Set(order).size !== 3) {
+            alert('Each section must be unique! Please choose a different order.');
+            return;
+        }
+
+        const settingsRes = await fetch('/api/settings');
+        const currentSettings = await settingsRes.json();
+
+        const settings = {
+            ...currentSettings,
+            section_order: order
+        };
+
+        await persistSettings(settings);
+    }
+
+    async function persistSettings(settings) {
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+            if (res.ok) {
+                alert('Settings saved successfully!');
+            } else {
+                alert('Failed to save settings.');
+            }
+        } catch (e) {
+            alert('Error saving settings: ' + e);
+        }
+    }
 
     async function triggerBackup() {
         try {

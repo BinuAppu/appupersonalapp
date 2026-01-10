@@ -13,6 +13,7 @@ KB_FILE = os.path.join(BASE_DIR, "knowledgebase.json")
 SECURE_FILE = os.path.join(BASE_DIR, "secure.json")
 USERNAME_FILE = os.path.join(BASE_DIR, "username.json")
 PROJECT_FILE = os.path.join(BASE_DIR, "project.json")
+SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 
 class DataManager:
     def __init__(self, data_file=DATA_FILE):
@@ -43,6 +44,28 @@ class DataManager:
     def set_user_name(self, name):
         with open(USERNAME_FILE, 'w') as f:
             json.dump({"user_name": name}, f, indent=4)
+
+    def get_settings(self):
+        if not os.path.exists(SETTINGS_FILE):
+            default_settings = {
+                "colors": {
+                    "nearing_2_weeks": "#F4C430",  # Saffron/Yellow
+                    "nearing_1_week": "#E53935",   # Red
+                    "overdue": "#8B0000"           # Dark Red
+                },
+                "section_order": ["tasks", "projects", "reminders"]
+            }
+            self.save_settings(default_settings)
+            return default_settings
+        try:
+            with open(SETTINGS_FILE, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return {"colors": {"nearing_2_weeks": "#F4C430", "nearing_1_week": "#E53935", "overdue": "#8B0000"}}
+
+    def save_settings(self, settings):
+        with open(SETTINGS_FILE, 'w') as f:
+            json.dump(settings, f, indent=4)
 
     def save_data(self):
         with open(self.data_file, 'w') as f:

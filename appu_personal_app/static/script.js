@@ -85,9 +85,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function updateReminderList(allReminders, weeks) {
+    async function updateReminderList(allReminders, weeks) {
         const reminderList = document.querySelector('.reminder-list');
         if (!reminderList) return;
+
+        // Fetch settings for colors
+        const settingsRes = await fetch('/api/settings');
+        const settings = await settingsRes.json();
+        const colors = settings.colors || {
+            nearing_2_weeks: "#F4C430",
+            nearing_1_week: "#E53935",
+            overdue: "#8B0000"
+        };
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -112,18 +121,40 @@ document.addEventListener('DOMContentLoaded', () => {
         upcoming.sort((a, b) => new Date(a.display_date) - new Date(b.display_date));
 
         if (upcoming.length > 0) {
-            reminderList.innerHTML = upcoming.map(rem => `
-                <div class="item-card recur-${rem.recurrence.toLowerCase()}" onclick="viewComments('reminder', '${rem.id}', '${rem.title.replace(/'/g, "\\'")}')">
+            reminderList.innerHTML = upcoming.map(rem => {
+                const remDate = new Date(rem.display_date + 'T00:00:00');
+                const diffTime = remDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let bgColor = "";
+                let textColorStyle = "";
+                let iconStyle = "";
+
+                if (diffDays < 0) bgColor = colors.overdue;
+                else if (diffDays <= 7) bgColor = colors.nearing_1_week;
+                else if (diffDays <= 14) bgColor = colors.nearing_2_weeks;
+
+                if (bgColor) {
+                    textColorStyle = 'color: white;';
+                    iconStyle = 'filter: brightness(0) invert(1);';
+                }
+
+                return `
+                <div class="item-card recur-${rem.recurrence.toLowerCase()}" 
+                    onclick="viewComments('reminder', '${rem.id}', '${rem.title.replace(/'/g, "\\'")}')"
+                    style="${bgColor ? `background-color: ${bgColor};` : ''} ${textColorStyle} position: relative;">
                     <div class="item-card-header">
                         <div>
-                            <h4 class="item-card-title">${rem.title}</h4>
-                            <div class="item-card-meta">${rem.display_date} • ${rem.recurrence}</div>
+                            <h4 class="item-card-title" style="${textColorStyle}">${rem.title}</h4>
+                            <div class="item-card-meta" style="${bgColor ? 'color: rgba(255,255,255,0.8);' : ''}">${rem.display_date} • ${rem.recurrence}</div>
                         </div>
                         <span class="delete-icon delete-btn" data-type="reminders" data-id="${rem.id}"
-                            onclick="event.stopPropagation()">🗑️</span>
+                            onclick="event.stopPropagation()" style="${iconStyle}">🗑️</span>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
+        } else {
+            reminderList.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No upcoming reminders.</p>';
         }
     }
 

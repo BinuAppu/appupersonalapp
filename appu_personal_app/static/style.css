@@ -968,7 +968,7 @@ textarea:focus {
 .dashboard-grid {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 2.5rem;
 }
 
 .section-header {
@@ -981,26 +981,11 @@ textarea:focus {
 .reminder-list,
 .project-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
 }
 
-@media (max-width: 1200px) {
-
-    .task-list,
-    .reminder-list {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-@media (max-width: 1000px) {
-
-    .task-list,
-    .reminder-list,
-    .project-list {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
+/* Removed multi-column lists inside grid sections for better clarity in 3-column layout */
 
 /* Item Cards (Reminders & Tasks) */
 .item-card {

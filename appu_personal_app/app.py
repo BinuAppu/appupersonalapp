@@ -47,12 +47,14 @@ def dashboard():
     active_tasks = data_manager.get_active_tasks()
     projects = data_manager.get_all_projects()
     user_name = data_manager.get_user_name()
+    settings = data_manager.get_settings()
     return render_template('dashboard.html', 
                            upcoming_reminders=upcoming_reminders,
                            future_reminders=future_reminders,
                            active_tasks=active_tasks,
                            projects=projects,
-                           user_name=user_name)
+                           user_name=user_name,
+                           settings=settings)
 
 @app.route('/all')
 def all_items():
@@ -325,6 +327,15 @@ def handle_username():
         return jsonify({"success": False, "error": "Name required"}), 400
     else:
         return jsonify({"name": data_manager.get_user_name()})
+
+@app.route('/api/settings', methods=['GET', 'POST'])
+def handle_settings():
+    if request.method == 'POST':
+        data = request.json
+        data_manager.save_settings(data)
+        return jsonify({"success": True})
+    else:
+        return jsonify(data_manager.get_settings())
 
 @app.route('/api/backup', methods=['POST'])
 def backup_data():
