@@ -45,7 +45,7 @@ def dashboard():
     upcoming_reminders = data_manager.get_upcoming_reminders(weeks=6)
     future_reminders = data_manager.get_upcoming_reminders(weeks=12)
     active_tasks = data_manager.get_active_tasks()
-    projects = data_manager.get_all_projects()
+    projects = [p for p in data_manager.get_all_projects() if p.get('status') != 'Completed']
     user_name = data_manager.get_user_name()
     settings = data_manager.get_settings()
     return render_template('dashboard.html', 
@@ -92,7 +92,9 @@ def add_reminder():
         data['title'], 
         data['description'], 
         data['date'], 
-        data['recurrence']
+        data['recurrence'],
+        data.get('start_time'),
+        data.get('end_time')
     )
     return jsonify(reminder)
 
@@ -104,7 +106,9 @@ def update_reminder(reminder_id):
         data['title'],
         data['description'],
         data['date'],
-        data['recurrence']
+        data['recurrence'],
+        data.get('start_time'),
+        data.get('end_time')
     )
     return jsonify(reminder)
 
@@ -154,6 +158,84 @@ def delete_reminder(reminder_id):
 def delete_task(task_id):
     data_manager.delete_task(task_id)
     return jsonify({"success": True})
+
+# --- Bulk Upload API ---
+
+@app.route('/api/csv-template')
+def get_csv_template():
+    import io
+    import csv
+    from flask import Response
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    # Header: type, title, description, date/status, recurrence, start_time, end_time
+    writer.writerow(['type', 'title', 'description', 'date_or_status', 'recurrence', 'start_time', 'end_time'])
+    writer.writerow(['reminder', 'Buy Groceries', 'Milk, Bread, Eggs', '2026-01-20', 'Weekly', '10:00', '11:00'])
+    writer.writerow(['task', 'Finish Report', 'Quarterly financial report', 'Yet to Start', '', '', ''])
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=bulk_upload_template.csv"}
+    )
+
+@app.route('/api/bulk-upload', methods=['POST'])
+def bulk_upload():
+    import io
+    import csv
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    if file and file.filename.endswith('.csv'):
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        reader = csv.DictReader(stream)
+        
+        imported_count = 0
+        errors = []
+        
+        for row in reader:
+            item_type = row.get('type', '').lower().strip()
+            title = row.get('title', '').strip()
+            description = row.get('description', '').strip()
+            
+            if not title:
+                continue
+                
+            try:
+                if item_type == 'reminder':
+                    data_manager.add_reminder(
+                        title,
+                        description,
+                        row.get('date_or_status', datetime.now().strftime('%Y-%m-%d')),
+                        row.get('recurrence', 'None'),
+                        row.get('start_time'),
+                        row.get('end_time')
+                    )
+                    imported_count += 1
+                elif item_type == 'task':
+                    data_manager.add_task(
+                        title,
+                        description,
+                        row.get('date_or_status', 'Yet to Start')
+                    )
+                    imported_count += 1
+                else:
+                    errors.append(f"Unknown type '{item_type}' for item '{title}'")
+            except Exception as e:
+                errors.append(f"Error importing '{title}': {str(e)}")
+        
+        return jsonify({
+            "success": True, 
+            "count": imported_count, 
+            "errors": errors
+        })
+    
+    return jsonify({"error": "Invalid file type"}), 400
 
 # --- Knowledge Base API ---
 @app.route('/api/kb', methods=['GET'])

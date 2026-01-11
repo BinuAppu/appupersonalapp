@@ -10,7 +10,26 @@
         <button class="btn btn-secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
         <button class="btn btn-secondary" style="background-color: var(--accent-color);" onclick="openKBModal()">🧠 New
             KB Item</button>
-        <button class="btn btn-secondary" style="background-color: #9C27B0;" onclick="openCreateProjectModal()">📁 New Project</button>
+        <button class="btn btn-secondary" style="background-color: #9C27B0;" onclick="openCreateProjectModal()">📁 New
+            Project</button>
+    </div>
+</div>
+
+<div class="card"
+    style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border: 1px dashed var(--primary-color);">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+        <div style="flex: 1;">
+            <h3 style="margin: 0 0 5px 0;">Bulk Upload</h3>
+            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Upload a CSV file to bulk add Reminders
+                and Tasks.
+                <a href="/api/csv-template" style="color: var(--primary-color); font-weight: 600;">Download CSV
+                    Template</a>
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="file" id="bulkUploadInput" accept=".csv" style="font-size: 0.85rem;">
+            <button class="btn" onclick="handleBulkUpload()" style="padding: 8px 15px;">🚀 Upload</button>
+        </div>
     </div>
 </div>
 
@@ -19,7 +38,8 @@
     <button class="tab-btn" id="reminderTabBtn" onclick="showTab('reminders')">🔔 Reminders ({{ reminders|length
         }})</button>
     <button class="tab-btn" id="kbTabBtn" onclick="showTab('kb')">🧠 Knowledge Base ({{ kb_items|length }})</button>
-    <button class="tab-btn" id="projectTabBtn" onclick="showTab('projects')">📁 Projects ({{ projects|length }})</button>
+    <button class="tab-btn" id="projectTabBtn" onclick="showTab('projects')">📁 Projects ({{ projects|length
+        }})</button>
 </div>
 
 <div id="tasksTab" class="tab-content">
@@ -55,7 +75,8 @@
                     <td style="padding: 12px; color: var(--text-muted);">{{ task.description }}</td>
                     <td style="padding: 12px;">
                         <span class="view-comments-link"
-                            onclick="viewComments('task', '{{ task.id }}', '{{ task.title|replace("'", "\\'") }}')">💬
+                            onclick="viewComments('task', '{{ task.id }}', '{{ task.title|replace("'", "\\'")|replace('"', '
+                            &quot;') }}')">💬
                             View ({{ task.comments|length }})</span>
                     </td>
                     <td style="padding: 12px; display: flex; gap: 8px;">
@@ -104,13 +125,16 @@
                     <td style="padding: 12px;">{{ rem.recurrence }}</td>
                     <td style="padding: 12px;">
                         <span class="view-comments-link"
-                            onclick="viewComments('reminder', '{{ rem.id }}', '{{ rem.title|replace("'", "\\'") }}')">💬
+                            onclick="viewComments('reminder', '{{ rem.id }}', '{{ rem.title|replace("'", "\\'")|replace('"', '
+                            &quot;') }}')">💬
                             View ({{ rem.comments|length }})</span>
                     </td>
                     <td style="padding: 12px; display: flex; gap: 8px;">
                         <button class="edit-btn" data-edit-type="reminder" data-edit-id="{{ rem.id }}"
                             data-edit-title="{{ rem.title }}" data-edit-description="{{ rem.description }}"
                             data-edit-date="{{ rem.date }}" data-edit-recurrence="{{ rem.recurrence }}"
+                            data-edit-start-time="{{ rem.start_time or '' }}"
+                            data-edit-end-time="{{ rem.end_time or '' }}"
                             style="background:none; border:none; color: var(--primary-color); cursor:pointer; font-weight:600;">Edit</button>
                         <button class="delete-btn" data-type="reminders" data-id="{{ rem.id }}"
                             style="background:none; border:none; color: #FF7575; cursor:pointer; font-weight:600;">Delete</button>
@@ -182,15 +206,21 @@
             <tbody id="projectTable">
                 {% for project in projects %}
                 <tr style="border-bottom: 1px solid var(--border-color);" data-status="{{ project.status }}">
-                    <td style="padding: 12px; font-weight: 600;"><a href="/project/{{ project.id }}" style="color: var(--primary-color); text-decoration: none;">{{ project.name }}</a></td>
-                    <td style="padding: 12px; color: var(--text-muted); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ project.description }}</td>
+                    <td style="padding: 12px; font-weight: 600;"><a href="/project/{{ project.id }}"
+                            style="color: var(--primary-color); text-decoration: none;">{{ project.name }}</a></td>
+                    <td
+                        style="padding: 12px; color: var(--text-muted); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ project.description }}</td>
                     <td style="padding: 12px;">{{ project.start_date }}</td>
                     <td style="padding: 12px;">{{ project.end_date }}</td>
-                    <td style="padding: 12px;"><span class="status-badge status-{{ project.status.lower().replace(' ', '') }}">{{ project.status }}</span></td>
+                    <td style="padding: 12px;"><span
+                            class="status-badge status-{{ project.status.lower().replace(' ', '') }}">{{ project.status
+                            }}</span></td>
                     <td style="padding: 12px; display: flex; gap: 8px;">
                         <button class="edit-btn" data-edit-type="project" data-edit-id="{{ project.id }}"
                             data-edit-name="{{ project.name }}" data-edit-description="{{ project.description }}"
-                            data-edit-start-date="{{ project.start_date }}" data-edit-end-date="{{ project.end_date }}" data-edit-status="{{ project.status }}"
+                            data-edit-start-date="{{ project.start_date }}" data-edit-end-date="{{ project.end_date }}"
+                            data-edit-status="{{ project.status }}"
                             style="background:none; border:none; color: var(--primary-color); cursor:pointer; font-weight:600;">Edit</button>
                         <button class="delete-btn" data-type="projects" data-id="{{ project.id }}"
                             style="background:none; border:none; color: #FF7575; cursor:pointer; font-weight:600;">Delete</button>

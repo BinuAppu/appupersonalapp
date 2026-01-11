@@ -165,6 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     iconStyle = 'filter: brightness(0) invert(1);';
                 }
 
+                const timeStr = (rem.start_time || rem.end_time) ?
+                    ` • ${rem.start_time || ''}${rem.end_time ? ' - ' + rem.end_time : ''}` : '';
+
                 return `
                 <div class="item-card recur-${rem.recurrence.toLowerCase()}" 
                     onclick="viewComments('reminder', '${rem.id}', '${rem.title.replace(/'/g, "\\'")}')"
@@ -172,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="item-card-header">
                         <div>
                             <h4 class="item-card-title" style="${textColorStyle}">${rem.title}</h4>
-                            <div class="item-card-meta" style="${bgColor ? 'color: rgba(255,255,255,0.8);' : ''}">${rem.display_date} • ${rem.recurrence}</div>
+                            <div class="item-card-meta" style="${bgColor ? 'color: rgba(255,255,255,0.8);' : ''}">${rem.display_date}${timeStr} • ${rem.recurrence}</div>
                         </div>
                         <span class="delete-icon delete-btn" data-type="reminders" data-id="${rem.id}"
                             onclick="event.stopPropagation()" style="${iconStyle}">🗑️</span>
@@ -479,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.openEditModal = function () { };
     }
 
-    window.openEditModal = function (type, id, title, description, dateOrStatus, recurrence = null) {
+    window.openEditModal = function (type, id, title, description, dateOrStatus, recurrence = null, startTime = null, endTime = null) {
         // Ensure function is called
         if (!type || !id) {
             console.error('openEditModal called with invalid parameters:', { type, id });
@@ -546,6 +549,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (dateField) dateField.value = String(dateOrStatus || '');
             if (recurField) recurField.value = String(recurrence || 'None');
 
+            const startField = document.getElementById('editRemStartTime');
+            const endField = document.getElementById('editRemEndTime');
+            if (startField) startField.value = startTime || '';
+            if (endField) endField.value = endTime || '';
+
             // Handle task editing
         } else if (type === 'task') {
             if (!editTaskForm) {
@@ -591,7 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
             title: document.getElementById('remTitle').value,
             description: document.getElementById('remDesc').value,
             date: document.getElementById('remDate').value,
-            recurrence: document.getElementById('remRecur').value
+            recurrence: document.getElementById('remRecur').value,
+            start_time: document.getElementById('remStartTime').value,
+            end_time: document.getElementById('remEndTime').value
         };
         const res = await fetch('/api/reminders', {
             method: 'POST',
@@ -654,7 +664,9 @@ document.addEventListener('DOMContentLoaded', () => {
             title: document.getElementById('editRemTitle').value,
             description: document.getElementById('editRemDesc').value,
             date: document.getElementById('editRemDate').value,
-            recurrence: document.getElementById('editRemRecur').value
+            recurrence: document.getElementById('editRemRecur').value,
+            start_time: document.getElementById('editRemStartTime').value,
+            end_time: document.getElementById('editRemEndTime').value
         };
 
         try {
@@ -747,7 +759,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (editType === 'reminder') {
                     const date = btn.getAttribute('data-edit-date') || '';
                     const recurrence = btn.getAttribute('data-edit-recurrence') || 'None';
-                    openEditModal('reminder', editId, title, description, date, recurrence);
+                    const startTime = btn.getAttribute('data-edit-start-time') || null;
+                    const endTime = btn.getAttribute('data-edit-end-time') || null;
+                    openEditModal('reminder', editId, title, description, date, recurrence, startTime, endTime);
                 }
                 return;
             }
@@ -797,6 +811,39 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    window.handleBulkUpload = async function () {
+        const fileInput = document.getElementById('bulkUploadInput');
+        if (!fileInput || !fileInput.files.length) {
+            alert('Please select a CSV file first.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const res = await fetch('/api/bulk-upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                let msg = `Successfully imported ${result.count} items.`;
+                if (result.errors && result.errors.length > 0) {
+                    msg += `\n\nErrors encountered:\n- ` + result.errors.join('\n- ');
+                }
+                alert(msg);
+                window.location.reload();
+            } else {
+                alert('Upload failed: ' + (result.error || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error('Error during bulk upload:', e);
+            alert('An error occurred during upload.');
+        }
+    };
 
     // Restore active tab on page load (for /all page)
     if (window.location.pathname === '/all') {

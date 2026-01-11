@@ -78,13 +78,15 @@ class DataManager:
             json.dump(self.data, f, indent=4)
 
     # --- Reminders ---
-    def add_reminder(self, title, description, date_str, recurrence):
+    def add_reminder(self, title, description, date_str, recurrence, start_time=None, end_time=None):
         reminder = {
             "id": str(uuid.uuid4()),
             "title": title,
             "description": description,
             "date": date_str,
             "recurrence": recurrence,
+            "start_time": start_time,
+            "end_time": end_time,
             "created_at": datetime.now().isoformat(),
             "comments": []
         }
@@ -223,13 +225,15 @@ class DataManager:
         self.data["reminders"] = [r for r in self.data["reminders"] if r["id"] != reminder_id]
         self.save_data()
 
-    def update_reminder(self, reminder_id, title, description, date_str, recurrence):
+    def update_reminder(self, reminder_id, title, description, date_str, recurrence, start_time=None, end_time=None):
         for reminder in self.data["reminders"]:
             if reminder["id"] == reminder_id:
                 reminder["title"] = title
                 reminder["description"] = description
                 reminder["date"] = date_str
                 reminder["recurrence"] = recurrence
+                reminder["start_time"] = start_time
+                reminder["end_time"] = end_time
                 # We don't necessarily update created_at
                 self.save_data()
                 return reminder
