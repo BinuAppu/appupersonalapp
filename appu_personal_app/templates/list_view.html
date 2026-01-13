@@ -6,12 +6,10 @@
 
     <div style="display: flex; gap: 10px;">
         <input type="text" id="searchInput" placeholder="Search title..." style="width: 200px;" onkeyup="filterItems()">
-        <button class="btn" onclick="openCreateModal('task')">✅ New Task</button>
-        <button class="btn btn-secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
-        <button class="btn btn-secondary" style="background-color: var(--accent-color);" onclick="openKBModal()">🧠 New
-            KB Item</button>
-        <button class="btn btn-secondary" style="background-color: #9C27B0;" onclick="openCreateProjectModal()">📁 New
-            Project</button>
+        <button class="btn-premium" onclick="openCreateModal('task')">✅ New Task</button>
+        <button class="btn-premium secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
+        <button class="btn-premium accent" onclick="openKBModal()">🧠 New KB Item</button>
+        <button class="btn-premium purple" onclick="openCreateProjectModal()">📁 New Project</button>
     </div>
 </div>
 
@@ -26,9 +24,15 @@
                     Template</a>
             </p>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="file" id="bulkUploadInput" accept=".csv" style="font-size: 0.85rem;">
-            <button class="btn" onclick="handleBulkUpload()" style="padding: 8px 15px;">🚀 Upload</button>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <label for="bulkUploadInput" class="custom-file-upload">
+                📂 <span>Browse File</span>
+            </label>
+            <input type="file" id="bulkUploadInput" accept=".csv" onchange="updateFileName()">
+            <span id="fileNameDisplay"
+                style="font-size: 0.8rem; color: var(--text-muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">No
+                file chosen</span>
+            <button class="btn-premium" onclick="handleBulkUpload()" style="padding: 8px 15px;">🚀 Upload</button>
         </div>
     </div>
 </div>
@@ -44,16 +48,19 @@
 
 <div id="tasksTab" class="tab-content">
     <div class="card">
-        <div class="filters">
-            <label>Filter Status:</label>
-            <select id="statusFilter" onchange="filterItems()">
-                <option value="All">All Statuses</option>
-                <option value="Yet to Start">Yet to Start</option>
-                <option value="Pending">Pending</option>
-                <option value="wip">In Progress</option>
-                <option value="Onhold">On Hold</option>
-                <option value="Completed">Completed</option>
-            </select>
+        <div class="filters" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <label>Filter Status:</label>
+                <select id="statusFilter" onchange="filterItems()">
+                    <option value="All">All Statuses</option>
+                    <option value="Yet to Start">Yet to Start</option>
+                    <option value="Pending">Pending</option>
+                    <option value="wip">In Progress</option>
+                    <option value="Onhold">On Hold</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <a href="/api/tasks/download" class="btn-premium accent">📥 Download Tasks CSV</a>
         </div>
         <table style="width: 100%; text-align: left; border-collapse: collapse;">
             <thead>
@@ -76,8 +83,7 @@
                     <td style="padding: 12px;">
                         <span class="view-comments-link"
                             onclick="viewComments('task', '{{ task.id }}', '{{ task.title|replace("'", "\\'")|replace('"', '
-                            &quot;') }}')">💬
-                            View ({{ task.comments|length }})</span>
+                            &quot;') }}')">💬 View ({{ task.comments|length }})</span>
                     </td>
                     <td style="padding: 12px; display: flex; gap: 8px;">
                         <button class="edit-btn" data-edit-type="task" data-edit-id="{{ task.id }}"
@@ -96,16 +102,19 @@
 
 <div id="remindersTab" class="tab-content" style="display: none;">
     <div class="card">
-        <div class="filters">
-            <label>Filter Recurrence:</label>
-            <select id="recurrenceFilter" onchange="filterItems()">
-                <option value="All">All Recurrences</option>
-                <option value="None">No Recurrence</option>
-                <option value="Daily">Daily</option>
-                <option value="Weekly">Weekly</option>
-                <option value="Monthly">Monthly</option>
-                <option value="Yearly">Yearly</option>
-            </select>
+        <div class="filters" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <label>Filter Recurrence:</label>
+                <select id="recurrenceFilter" onchange="filterItems()">
+                    <option value="All">All Recurrences</option>
+                    <option value="None">No Recurrence</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Yearly">Yearly</option>
+                </select>
+            </div>
+            <a href="/api/reminders/download" class="btn-premium accent">📥 Download Reminders CSV</a>
         </div>
         <table style="width: 100%; text-align: left; border-collapse: collapse;">
             <thead>
@@ -126,8 +135,7 @@
                     <td style="padding: 12px;">
                         <span class="view-comments-link"
                             onclick="viewComments('reminder', '{{ rem.id }}', '{{ rem.title|replace("'", "\\'")|replace('"', '
-                            &quot;') }}')">💬
-                            View ({{ rem.comments|length }})</span>
+                            &quot;') }}')">💬 View ({{ rem.comments|length }})</span>
                     </td>
                     <td style="padding: 12px; display: flex; gap: 8px;">
                         <button class="edit-btn" data-edit-type="reminder" data-edit-id="{{ rem.id }}"
@@ -181,16 +189,19 @@
 
 <div id="projectsTab" class="tab-content" style="display: none;">
     <div class="card">
-        <div class="filters">
-            <label>Filter Status:</label>
-            <select id="projectStatusFilter" onchange="filterItems()">
-                <option value="All">All Statuses</option>
-                <option value="Yet to Start">Yet to Start</option>
-                <option value="Work In progress">Work In progress</option>
-                <option value="On-Hold">On-Hold</option>
-                <option value="Completed">Completed</option>
-                <option value="Delayed">Delayed</option>
-            </select>
+        <div class="filters" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <label>Filter Status:</label>
+                <select id="projectStatusFilter" onchange="filterItems()">
+                    <option value="All">All Statuses</option>
+                    <option value="Yet to Start">Yet to Start</option>
+                    <option value="Work In progress">Work In progress</option>
+                    <option value="On-Hold">On-Hold</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Delayed">Delayed</option>
+                </select>
+            </div>
+            <a href="/api/projects/download" class="btn-premium accent">📥 Download Projects CSV</a>
         </div>
         <table style="width: 100%; text-align: left; border-collapse: collapse;">
             <thead>
@@ -305,6 +316,18 @@
                 const matchesStatus = (projectStatusFilter === "All" || projectRows[i].getAttribute("data-status") === projectStatusFilter);
                 projectRows[i].style.display = (matchesSearch && matchesStatus) ? "" : "none";
             }
+        }
+    }
+
+    window.updateFileName = function () {
+        const input = document.getElementById('bulkUploadInput');
+        const display = document.getElementById('fileNameDisplay');
+        if (input.files.length > 0) {
+            display.textContent = input.files[0].name;
+            display.style.color = "var(--primary-color)";
+        } else {
+            display.textContent = "No file chosen";
+            display.style.color = "var(--text-muted)";
         }
     }
 </script>

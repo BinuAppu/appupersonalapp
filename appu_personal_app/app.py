@@ -563,6 +563,89 @@ def get_parent_task_dates(project_id, task_id):
         return jsonify({"start_date": start_date, "end_date": end_date})
     return jsonify({"error": "Parent task or dates not found"}), 404
 
+@app.route('/api/reminders/download')
+def download_reminders():
+    import io
+    import csv
+    from flask import Response
+    
+    reminders = data_manager.get_all_reminders()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['id', 'title', 'description', 'date', 'recurrence', 'start_time', 'end_time', 'created_at'])
+    
+    for rem in reminders:
+        writer.writerow([
+            rem.get('id'),
+            rem.get('title'),
+            rem.get('description'),
+            rem.get('date'),
+            rem.get('recurrence'),
+            rem.get('start_time', ''),
+            rem.get('end_time', ''),
+            rem.get('created_at')
+        ])
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=reminders_export.csv"}
+    )
+
+@app.route('/api/tasks/download')
+def download_tasks():
+    import io
+    import csv
+    from flask import Response
+    
+    tasks = data_manager.get_all_tasks()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['id', 'title', 'description', 'status', 'created_at'])
+    
+    for task in tasks:
+        writer.writerow([
+            task.get('id'),
+            task.get('title'),
+            task.get('description'),
+            task.get('status'),
+            task.get('created_at')
+        ])
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=tasks_export.csv"}
+    )
+
+@app.route('/api/projects/download')
+def download_projects():
+    import io
+    import csv
+    from flask import Response
+    
+    projects = data_manager.get_all_projects()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['id', 'name', 'description', 'start_date', 'end_date', 'status', 'created_at'])
+    
+    for project in projects:
+        writer.writerow([
+            project.get('id'),
+            project.get('name'),
+            project.get('description'),
+            project.get('start_date'),
+            project.get('end_date'),
+            project.get('status'),
+            project.get('created_at')
+        ])
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=projects_export.csv"}
+    )
+
 @app.route('/api/check_update')
 def check_update():
     try:
