@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>All Items</h1>
+
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="searchInput" placeholder="Search title..." style="width: 200px;" onkeyup="filterItems()">
+        <button class="btn-premium" onclick="openCreateModal('task')">✅ New Task</button>
+        <button class="btn-premium secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
+        <button class="btn-premium accent" onclick="openKBModal()">🧠 New KB Item</button>
+        <button class="btn-premium purple" onclick="openCreateProjectModal()">📁 New Project</button>
+    </div>
+</div>
+
+<div class="card"
+    style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border: 1px dashed var(--primary-color);">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+        <div style="flex: 1;">
+            <h3 style="margin: 0 0 5px 0;">Bulk Upload</h3>
+            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Upload a CSV file to bulk add Reminders
+                and Tasks.
+                <a href="/api/csv-template" style="color: var(--primary-color); font-weight: 600;">Download CSV
+                    Template</a>
+            </p>
+        </div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <label for="bulkUploadInput" class="custom-file-upload">
+                📂 <span>Browse File</span>
+            </label>
+            <input type="file" id="bulkUploadInput" accept=".csv" onchange="updateFileName()">
+            <span id="fileNameDisplay"
+                style="font-size: 0.8rem; color: var(--text-muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">No
+                file chosen</span>
+            <button class="btn-premium" onclick="handleBulkUpload()" style="padding: 8px 15px;">🚀 Upload</button>
+        </div>
+    </div>
+</div>
+
+<div class="tabs">
+    <button class="tab-btn active" id="taskTabBtn" onclick="showTab('tasks')">✅ Tasks ({{ tasks|length }})</button>
+    <button class="tab-btn" id="reminderTabBtn" onclick="showTab('reminders')">🔔 Reminders ({{ reminders|length
+        }})</button>
+    <button class="tab-btn" id="kbTabBtn" onclick="showTab('kb')">🧠 Knowledge Base ({{ kb_items|length }})</button>
+    <button class="tab-btn" id="projectTabBtn" onclick="showTab('projects')">📁 Projects ({{ projects|length
+        }})</button>
+</div>
+
+<div id="tasksTab" class="tab-content">
+    <div class="card">
+        <div class="filters" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <label>Filter Status:</label>
+                <select id="statusFilter" onchange="filterItems()">
+                    <option value="All">All Statuses</option>
+                    <option value="Yet to Start">Yet to Start</option>
+                    <option value="Pending">Pending</option>
+                    <option value="wip">In Progress</option>
+                    <option value="Onhold">On Hold</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <a href="/api/tasks/download" class="btn-premium accent">📥 Download Tasks CSV</a>
+        </div>
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 12px;">Title</th>
+                    <th style="padding: 12px;">Status</th>
+                    <th style="padding: 12px;">Description</th>
+                    <th style="padding: 12px;">Comments</th>
+                    <th style="padding: 12px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="taskTable">
+                {% for task in tasks %}
+                <tr style="border-bottom: 1px solid var(--border-color);" data-status="{{ task.status }}">
+                    <td style="padding: 12px; font-weight: 600;">{{ task.title }}</td>
+                    <td style="padding: 12px;"><span
+                            class="status-badge status-{{ task.status.lower().replace(' ', '') }}">{{ task.status
+                            }}</span></td>
+                    <td style="padding: 12px; color: var(--text-muted);">{{ task.description }}</td>
+                    <td style="padding: 12px;">
+                        <span class="view-comments-link"
+                            onclick="viewComments('task', '{{ task.id }}', '{{ task.title|replace("'", "\\'")|replace('"', '
+                            &quot;') }}')">💬 View ({{ task.comments|length }})</span>
+                    </td>
+                    <td style="padding: 12px; display: flex; gap: 8px;">
+                        <button class="edit-btn" data-edit-type="task" data-edit-id="{{ task.id }}"
+                            data-edit-title="{{ task.title }}" data-edit-description="{{ task.description }}"
+                            data-edit-status="{{ task.status }}"
+                            style="background:none; border:none; color: var(--primary-color); cursor:pointer; font-weight:600;">Edit</button>
+                        <button class="delete-btn" data-type="tasks" data-id="{{ task.id }}"
+                            style="background:none; border:none; color: #FF7575; cursor:pointer; font-weight:600;">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="remindersTab" class="tab-content" style="display: none;">
+    <div class="card">
+        <div class="filters" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <label>Filter Recurrence:</label>
+                <select id="recurrenceFilter" onchange="filterItems()">
+                    <option value="All">All Recurrences</option>
+                    <option value="None">No Recurrence</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Yearly">Yearly</option>
+                </select>
+            </div>
+            <a href="/api/reminders/download" class="btn-premium accent">📥 Download Reminders CSV</a>
+        </div>
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 12px;">Title</th>
+                    <th style="padding: 12px;">Date</th>
+                    <th style="padding: 12px;">Recurrence</th>
+                    <th style="padding: 12px;">Comments</th>
+                    <th style="padding: 12px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="reminderTable">
+                {% for rem in reminders %}
+                <tr style="border-bottom: 1px solid var(--border-color);" data-recurrence="{{ rem.recurrence }}">
+                    <td style="padding: 12px; font-weight: 600;">{{ rem.title }}</td>
+                    <td style="padding: 12px;">{{ rem.date }}</td>
+                    <td style="padding: 12px;">{{ rem.recurrence }}</td>
+                    <td style="padding: 12px;">
+                        <span class="view-comments-link"
+                            onclick="viewComments('reminder', '{{ rem.id }}', '{{ rem.title|replace("'", "\\'")|replace('"', '
+                            &quot;') }}')">💬 View ({{ rem.comments|length }})</span>
+                    </td>
+                    <td style="padding: 12px; display: flex; gap: 8px;">
+                        <button class="edit-btn" data-edit-type="reminder" data-edit-id="{{ rem.id }}"
+                            data-edit-title="{{ rem.title }}" data-edit-description="{{ rem.description }}"
+                            data-edit-date="{{ rem.date }}" data-edit-recurrence="{{ rem.recurrence }}"
+                            data-edit-start-time="{{ rem.start_time or '' }}"
+                            data-edit-end-time="{{ rem.end_time or '' }}"
+                            style="background:none; border:none; color: var(--primary-color); cursor:pointer; font-weight:600;">Edit</button>
+                        <button class="delete-btn" data-type="reminders" data-id="{{ rem.id }}"
+                            style="background:none; border:none; color: #FF7575; cursor:pointer; font-weight:600;">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="kbTab" class="tab-content" style="display: none;">
+    <div class="card">
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 12px;">Title</th>
+                    <th style="padding: 12px;">Data</th>
+                    <th style="padding: 12px;">URL</th>
+                    <th style="padding: 12px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="kbTable">
+                {% for item in kb_items %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px; font-weight: 600;">{{ item.title }}</td>
+                    <td
+                        style="padding: 12px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ item.data }}</td>
+                    <td style="padding: 12px;"><a href="{{ item.url }}" target="_blank"
+                            style="color: var(--primary-color);">{{ item.url }}</a></td>
+                    <td style="padding: 12px; display: flex; gap: 8px;">
+                        <button onclick="openKBModal('{{ item.id }}')"
+                            style="background:none; border:none; color: var(--primary-color); cursor:pointer; font-weight:600;">Edit</button>
+                        <button onclick="deleteKBItem('{{ item.id }}')"
+                            style="background:none; border:none; color: #FF7575; cursor:pointer; font-weight:600;">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="projectsTab" class="tab-content" style="display: none;">
+    <div class="card">
+        <div class="filters" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <label>Filter Status:</label>
+                <select id="projectStatusFilter" onchange="filterItems()">
+                    <option value="All">All Statuses</option>
+                    <option value="Yet to Start">Yet to Start</option>
+                    <option value="Work In progress">Work In progress</option>
+                    <option value="On-Hold">On-Hold</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Delayed">Delayed</option>
+                </select>
+            </div>
+            <a href="/api/projects/download" class="btn-premium accent">📥 Download Projects CSV</a>
+        </div>
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 12px;">Name</th>
+                    <th style="padding: 12px;">Description</th>
+                    <th style="padding: 12px;">Start Date</th>
+                    <th style="padding: 12px;">End Date</th>
+                    <th style="padding: 12px;">Status</th>
+                    <th style="padding: 12px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="projectTable">
+                {% for project in projects %}
+                <tr style="border-bottom: 1px solid var(--border-color);" data-status="{{ project.status }}">
+                    <td style="padding: 12px; font-weight: 600;"><a href="/project/{{ project.id }}"
+                            style="color: var(--primary-color); text-decoration: none;">{{ project.name }}</a></td>
+                    <td
+                        style="padding: 12px; color: var(--text-muted); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ project.description }}</td>
+                    <td style="padding: 12px;">{{ project.start_date }}</td>
+                    <td style="padding: 12px;">{{ project.end_date }}</td>
+                    <td style="padding: 12px;"><span
+                            class="status-badge status-{{ project.status.lower().replace(' ', '') }}">{{ project.status
+                            }}</span></td>
+                    <td style="padding: 12px; display: flex; gap: 8px;">
+                        <button class="edit-btn" data-edit-type="project" data-edit-id="{{ project.id }}"
+                            data-edit-name="{{ project.name }}" data-edit-description="{{ project.description }}"
+                            data-edit-start-date="{{ project.start_date }}" data-edit-end-date="{{ project.end_date }}"
+                            data-edit-status="{{ project.status }}"
+                            style="background:none; border:none; color: var(--primary-color); cursor:pointer; font-weight:600;">Edit</button>
+                        <button class="delete-btn" data-type="projects" data-id="{{ project.id }}"
+                            style="background:none; border:none; color: #FF7575; cursor:pointer; font-weight:600;">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    window.showTab = function (tab) {
+        document.getElementById('tasksTab').style.display = tab === 'tasks' ? 'block' : 'none';
+        document.getElementById('remindersTab').style.display = tab === 'reminders' ? 'block' : 'none';
+        document.getElementById('kbTab').style.display = tab === 'kb' ? 'block' : 'none';
+        document.getElementById('projectsTab').style.display = tab === 'projects' ? 'block' : 'none';
+
+        document.getElementById('taskTabBtn').classList.toggle('active', tab === 'tasks');
+        document.getElementById('reminderTabBtn').classList.toggle('active', tab === 'reminders');
+        document.getElementById('kbTabBtn').classList.toggle('active', tab === 'kb');
+        document.getElementById('projectTabBtn').classList.toggle('active', tab === 'projects');
+
+        // Save the active tab
+        localStorage.setItem('activeTab', tab);
+
+        if (typeof filterItems === 'function') {
+            filterItems();
+        }
+    }
+
+    window.filterItems = function () {
+        const searchInput = document.getElementById("searchInput");
+        if (!searchInput) return;
+        const searchFilter = searchInput.value.toUpperCase();
+
+        // Tasks
+        const statusFilter = document.getElementById("statusFilter")?.value || "All";
+        const taskTable = document.getElementById("taskTable");
+        if (taskTable) {
+            const taskRows = taskTable.getElementsByTagName("tr");
+            for (let i = 0; i < taskRows.length; i++) {
+                const titleText = taskRows[i].getElementsByTagName("td")[0]?.textContent.toUpperCase() || '';
+                const matchesSearch = titleText.indexOf(searchFilter) > -1;
+                const matchesStatus = (statusFilter === "All" || taskRows[i].getAttribute("data-status") === statusFilter);
+                taskRows[i].style.display = (matchesSearch && matchesStatus) ? "" : "none";
+            }
+        }
+
+        // Reminders
+        const recurrenceFilter = document.getElementById("recurrenceFilter")?.value || "All";
+        const reminderTable = document.getElementById("reminderTable");
+        if (reminderTable) {
+            const remRows = reminderTable.getElementsByTagName("tr");
+            for (let i = 0; i < remRows.length; i++) {
+                const titleText = remRows[i].getElementsByTagName("td")[0]?.textContent.toUpperCase() || '';
+                const matchesSearch = titleText.indexOf(searchFilter) > -1;
+                const matchesRecur = (recurrenceFilter === "All" || remRows[i].getAttribute("data-recurrence") === recurrenceFilter);
+                remRows[i].style.display = (matchesSearch && matchesRecur) ? "" : "none";
+            }
+        }
+
+        // KB
+        const kbTable = document.getElementById("kbTable");
+        if (kbTable) {
+            const kbRows = kbTable.getElementsByTagName("tr");
+            for (let i = 0; i < kbRows.length; i++) {
+                const titleText = kbRows[i].getElementsByTagName("td")[0]?.textContent.toUpperCase() || '';
+                const matchesSearch = titleText.indexOf(searchFilter) > -1;
+                kbRows[i].style.display = matchesSearch ? "" : "none";
+            }
+        }
+
+        // Projects
+        const projectStatusFilter = document.getElementById("projectStatusFilter")?.value || "All";
+        const projectTable = document.getElementById("projectTable");
+        if (projectTable) {
+            const projectRows = projectTable.getElementsByTagName("tr");
+            for (let i = 0; i < projectRows.length; i++) {
+                const titleText = projectRows[i].getElementsByTagName("td")[0]?.textContent.toUpperCase() || '';
+                const matchesSearch = titleText.indexOf(searchFilter) > -1;
+                const matchesStatus = (projectStatusFilter === "All" || projectRows[i].getAttribute("data-status") === projectStatusFilter);
+                projectRows[i].style.display = (matchesSearch && matchesStatus) ? "" : "none";
+            }
+        }
+    }
+
+    window.updateFileName = function () {
+        const input = document.getElementById('bulkUploadInput');
+        const display = document.getElementById('fileNameDisplay');
+        if (input.files.length > 0) {
+            display.textContent = input.files[0].name;
+            display.style.color = "var(--primary-color)";
+        } else {
+            display.textContent = "No file chosen";
+            display.style.color = "var(--text-muted)";
+        }
+    }
+</script>
+{% endblock %}

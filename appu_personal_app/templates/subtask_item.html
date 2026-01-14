@@ -1,0 +1,55 @@
+{% set current_subtask_start = subtask.start_date %}
+{% set current_subtask_end = subtask.end_date %}
+<div class="subtask-item" data-task-id="{{ subtask.id }}">
+    <div class="subtask-header">
+        <div class="subtask-content">
+            <span class="subtask-tree-line"></span>
+            {% if subtask.subtasks and subtask.subtasks|length > 0 %}
+            <span class="subtask-toggle" onclick="toggleSubtask(this)" data-expanded="false">▶</span>
+            {% else %}
+            <span style="width: 20px; display: inline-block;"></span>
+            {% endif %}
+            <h5 class="subtask-title">{{ subtask.name }}</h5>
+            <span class="status-badge status-{{ subtask.status.lower().replace(' ', '') }}">{{ subtask.status }}</span>
+            <span style="margin-left: 10px; color: var(--text-muted); font-size: 0.85rem;">{{ subtask.start_date }} - {{
+                subtask.end_date }}</span>
+            <span style="margin-left: 10px; color: var(--text-muted); font-size: 0.85rem;">💬 {{
+                subtask.task_comments|length if subtask.task_comments else 0 }} comments</span>
+            {% if subtask.task_comments and subtask.task_comments|length > 0 %}
+            <span style="margin-left: 10px; color: var(--text-muted); font-size: 0.85rem;">
+                {{ subtask.task_comments[-1].timestamp|short_date }}: {{ subtask.task_comments[-1].text[:50] }}{% if
+                subtask.task_comments[-1].text|length > 50 %}...{% endif %}
+            </span>
+            {% endif %}
+        </div>
+        <div class="subtask-actions">
+            <button class="task-action-btn"
+                onclick="event.stopPropagation(); openEditProjectTaskModal('{{ project.id }}', '{{ subtask.id }}', '{{ subtask.name|replace("'", "\\'") }}', '{{ subtask.comments|replace("'", "\\'") }}', '{{ subtask.start_date }}', '{{ subtask.end_date }}', '{{ subtask.status }}', '{{ parent_start_date|default(project.start_date) }}', '{{ parent_end_date|default(project.end_date) }}')"
+                title="Edit Subtask">✏️</button>
+            <button class="task-action-btn"
+                onclick="event.stopPropagation(); openCreateSubtaskModal('{{ project.id }}', '{{ subtask.id }}')"
+                title="Add Subtask">➕</button>
+            <button class="task-action-btn"
+                onclick="event.stopPropagation(); viewProjectTaskComments('{{ project.id }}', '{{ subtask.id }}', '{{ subtask.name|replace("'", "\\'") }}')"
+                title="View Comments">💬</button>
+            <button class="task-action-btn delete-btn" data-type="project-tasks" data-project-id="{{ project.id }}"
+                data-task-id="{{ subtask.id }}" title="Delete Subtask">🗑️</button>
+        </div>
+    </div>
+    {% if subtask.comments %}
+    <div class="subtask-description">
+        <p>{{ subtask.comments }}</p>
+    </div>
+    {% endif %}
+    {% if subtask.subtasks and subtask.subtasks|length > 0 %}
+    <div class="subtask-nested" style="display: none;">
+        {% for nested_subtask in subtask.subtasks %}
+        {% set subtask = nested_subtask %}
+        {% set project = project %}
+        {% set parent_start_date = current_subtask_start %}
+        {% set parent_end_date = current_subtask_end %}
+        {% include 'subtask_item.html' %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
