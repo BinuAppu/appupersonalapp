@@ -30,11 +30,18 @@
         <div class="tool-body">
             <!-- Connectivity Tab -->
             <div id="connectivity" class="tab-content active">
-                <div class="input-group">
-                    <label for="net-targets">Targets (comma separated)</label>
-                    <textarea id="net-targets" placeholder="e.g. google.com:80, 1.1.1.1:53, microsoft.com"></textarea>
-                    <p class="input-hint">Default TCP: 80, Default UDP: 53</p>
+                <div class="row-group">
+                    <div class="input-group">
+                        <label for="net-ips">IP Address(es) <span class="sub-label">(Comma separated)</span></label>
+                        <textarea id="net-ips" placeholder="e.g. 8.8.8.8, 1.1.1.1&#10;192.168.1.1"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="net-ports">Port Number(s) <span class="sub-label">(Comma separated, ranges supported
+                                e.g. 80-90)</span></label>
+                        <input type="text" id="net-ports" placeholder="e.g. 80, 443, 8080-8085">
+                    </div>
                 </div>
+
                 <div class="options-row">
                     <div class="option-item">
                         <label>Protocol</label>
@@ -43,15 +50,34 @@
                             <label><input type="radio" name="protocol" value="UDP"> UDP</label>
                         </div>
                     </div>
+                    <div class="option-item">
+                        <label>Timeout</label>
+                        <div class="timeout-control">
+                            <label class="radio-label"><input type="radio" name="timeout-type" value="default" checked
+                                    onclick="toggleTimeoutInput(false)"> Default (2s)</label>
+                            <label class="radio-label"><input type="radio" name="timeout-type" value="manual"
+                                    onclick="toggleTimeoutInput(true)"> Manual</label>
+                            <div class="manual-timeout-input" id="manual-timeout-box" style="display: none;">
+                                <input type="number" id="net-timeout" value="5" min="1" max="60" style="width: 80px;">
+                                <span class="unit">sec</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="actions">
+
+                <div style="display: flex; gap: 1rem;">
                     <button class="primary-btn" onclick="checkConnectivity()">
                         <i class="fas fa-play"></i> Check Connectivity
                     </button>
+                    <button class="primary-btn" onclick="clearConnectivityResults()"
+                        style="background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">
+                        <i class="fas fa-trash"></i> Clear Results
+                    </button>
                 </div>
+
                 <div id="connectivity-results" class="results-container" style="display: none;">
                     <h3>Check Results</h3>
-                    <div class="results-grid" id="connectivity-list"></div>
+                    <div class="host-results-container" id="connectivity-list"></div>
                 </div>
             </div>
 
@@ -205,10 +231,28 @@
         gap: 1.5rem;
     }
 
+    .row-group {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .row-group {
+            grid-template-columns: 1fr;
+        }
+    }
+
     .input-group label {
         display: block;
         margin-bottom: 0.5rem;
         font-weight: 600;
+    }
+
+    .sub-label {
+        font-weight: 400;
+        font-size: 0.85rem;
+        color: var(--text-muted);
     }
 
     .input-group input,
@@ -234,16 +278,49 @@
         margin-top: 0.5rem;
     }
 
+    .options-row {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .option-item label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
     .radio-group {
         display: flex;
         gap: 1.5rem;
+        align-items: center;
+        height: 48px;
     }
 
-    .radio-group label {
+    .radio-group label,
+    .radio-label {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         cursor: pointer;
+    }
+
+    .timeout-control {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        height: 48px;
+    }
+
+    .manual-timeout-input {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .unit {
+        color: var(--text-muted);
+        font-size: 0.9rem;
     }
 
     .primary-btn {
@@ -272,57 +349,79 @@
         border-top: 1px solid var(--border-color);
     }
 
-    .results-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 1rem;
-    }
-
-    .res-card {
-        background: var(--bg-color);
-        padding: 1rem;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
+    .host-results-container {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 1.5rem;
     }
 
-    .res-card.success {
-        border-left: 4px solid #2ecc71;
+    .host-group {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        overflow: hidden;
     }
 
-    .res-card.failed {
-        border-left: 4px solid #e74c3c;
-    }
-
-    .res-card.open-filtered {
-        border-left: 4px solid #f1c40f;
-    }
-
-    .res-target {
+    .host-header {
+        padding: 1rem 1.5rem;
+        background: rgba(0, 0, 0, 0.02);
+        border-bottom: 1px solid var(--border-color);
         font-weight: 700;
-        font-family: monospace;
-    }
-
-    .res-status {
-        font-size: 0.9rem;
-        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
     }
 
-    .res-card.success .res-status {
+    .host-header i {
+        color: var(--primary-color);
+    }
+
+    .port-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1px;
+        /* for border effect if needed, or just gap */
+        background: var(--border-color);
+        /* Lines between items */
+        padding: 1px;
+    }
+
+    .port-item {
+        background: var(--bg-color);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.25rem;
+    }
+
+    .port-number {
+        font-weight: 700;
+        font-family: monospace;
+        font-size: 1.1rem;
+    }
+
+    .port-status {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+    }
+
+    .status-success {
         color: #2ecc71;
+        background: rgba(46, 204, 113, 0.1);
     }
 
-    .res-card.failed .res-status {
+    .status-failed {
         color: #e74c3c;
+        background: rgba(231, 76, 60, 0.1);
     }
 
-    .res-card.open-filtered .res-status {
+    .status-filtered {
         color: #f1c40f;
+        background: rgba(241, 196, 15, 0.1);
     }
 
     /* Cert Styling */
@@ -408,13 +507,35 @@
 
         document.getElementById(tabId).classList.add('active');
         event.currentTarget.classList.add('active');
+
+        // Clear all results immediately on tab switch
+        document.querySelectorAll('.results-container').forEach(c => c.style.display = 'none');
+        document.getElementById('connectivity-list').innerHTML = '';
+        document.getElementById('cert-details-content').innerHTML = '';
+        document.getElementById('diag-output').textContent = '';
+    }
+
+    function toggleTimeoutInput(show) {
+        document.getElementById('manual-timeout-box').style.display = show ? 'flex' : 'none';
+    }
+
+    function clearConnectivityResults() {
+        document.getElementById('connectivity-results').style.display = 'none';
+        document.getElementById('connectivity-list').innerHTML = '';
     }
 
     async function checkConnectivity() {
-        const targets = document.getElementById('net-targets').value;
+        const ips = document.getElementById('net-ips').value;
+        const ports = document.getElementById('net-ports').value;
         const protocol = document.querySelector('input[name="protocol"]:checked').value;
 
-        if (!targets) return alert('Enter at least one target');
+        let timeout = 2.0;
+        const timeoutType = document.querySelector('input[name="timeout-type"]:checked').value;
+        if (timeoutType === 'manual') {
+            timeout = document.getElementById('net-timeout').value;
+        }
+
+        if (!ips || !ports) return alert('Enter IPs and Ports');
 
         toggleLoading(true, 'Checking connectivity...');
 
@@ -422,31 +543,59 @@
             const res = await fetch('/api/net/check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targets, protocol })
+                body: JSON.stringify({ ips, ports, protocol, timeout })
             });
             const data = await res.json();
 
+            if (data.error) throw new Error(data.error);
+
             const list = document.getElementById('connectivity-list');
-            list.innerHTML = '';
+            // Append to existing results or clear? User wanted "clear" option, implies persistence until cleared.
+            // But let's follow standard pattern: New check = New results unless explicitly accumulating. 
+            // Most tools clear on new run. If I add "Clear", maybe I should append? 
+            // The prompt says "should have option to clear the result screen". 
+            // This suggests results might stick around or accumulate. 
+            // Let's make it APPEND new results, so "Clear" is useful.
+            // If I just overwrite, "Clear" is redundant (run again overwrites).
+            // So I will remove `list.innerHTML = '';` to allow accumulation.
 
-            data.results.forEach(r => {
-                const card = document.createElement('div');
-                const statusClass = r.status.toLowerCase().replace(/[^a-z0-9]/g, '-');
-                card.className = `res-card ${statusClass}`;
+            // Wait, if I assume accumulation, I should ensure the container is visible.
 
-                let icon = 'fa-check-circle';
-                if (statusClass.includes('failed')) icon = 'fa-times-circle';
-                else if (statusClass.includes('filtered')) icon = 'fa-exclamation-triangle';
+            data.results.forEach(hostGroup => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'host-group';
 
-                card.innerHTML = `
-                    <div class="res-target">${r.target}</div>
-                    <div class="res-status">
-                        <i class="fas ${icon}"></i>
-                        ${r.status}
+                // Display Protocol in header
+                const protoLabel = hostGroup.protocol || protocol;
+
+                let portHtml = '';
+                hostGroup.results.forEach(r => {
+                    const statusClass = r.status.toLowerCase().includes('success') ? 'status-success' :
+                        (r.status.toLowerCase().includes('open') ? 'status-filtered' : 'status-failed');
+
+                    portHtml += `
+                        <div class="port-item">
+                            <div class="port-number">${r.port}</div>
+                            <div class="port-status ${statusClass}">
+                                ${r.status}
+                            </div>
+                            ${r.error ? `<small style="color:var(--text-muted); font-size:0.7em;">${r.error}</small>` : ''}
+                        </div>
+                    `;
+                });
+
+                groupDiv.innerHTML = `
+                    <div class="host-header" style="justify-content: space-between;">
+                        <span><i class="fas fa-server"></i> ${hostGroup.host}</span>
+                        <span style="font-size: 0.8rem; background: var(--bg-color); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color);">
+                            ${protoLabel}
+                        </span>
                     </div>
-                    ${r.error ? `<div class="input-hint">${r.error}</div>` : ''}
+                    <div class="port-grid">
+                        ${portHtml}
+                    </div>
                 `;
-                list.appendChild(card);
+                list.insertBefore(groupDiv, list.firstChild); // Prepend new results
             });
 
             document.getElementById('connectivity-results').style.display = 'block';
@@ -474,6 +623,11 @@
             if (data.error) throw new Error(data.error);
 
             const content = document.getElementById('cert-details-content');
+
+            const sansHtml = data.sans && data.sans.length > 0
+                ? data.sans.map(s => `<span style="display:inline-block; margin-right:8px; margin-bottom:4px; padding:2px 6px; background:var(--bg-color); border-radius:4px; font-family:monospace; font-size:0.85rem;">${s}</span>`).join('')
+                : '<span class="kv-value">None</span>';
+
             content.innerHTML = `
                 <div class="cert-section">
                     <h4>Subject</h4>
@@ -493,6 +647,13 @@
                         <div class="kv-item"><span class="kv-label">Not Before</span><span class="kv-value">${data.notBefore}</span></div>
                         <div class="kv-item"><span class="kv-label">Not After</span><span class="kv-value">${data.notAfter}</span></div>
                         <div class="kv-item"><span class="kv-label">Expired</span><span class="kv-value" style="color: ${data.expired ? 'red' : 'green'}">${data.expired ? 'YES' : 'NO'}</span></div>
+                        <div class="kv-item"><span class="kv-label">Sig Alg</span><span class="kv-value">${data.signature_algorithm}</span></div>
+                    </div>
+                </div>
+                 <div class="cert-section">
+                    <h4>Subject Alternative Names (SANs)</h4>
+                    <div style="display: flex; flex-wrap: wrap;">
+                        ${sansHtml}
                     </div>
                 </div>
             `;

@@ -514,69 +514,92 @@ def net_tools():
 def check_connectivity():
     import socket
     data = request.json
-    targets_input = data.get('targets', '')
+    ips_input = data.get('ips', '')
+    ports_input = data.get('ports', '')
     proto = data.get('protocol', 'TCP').upper()
+    timeout_val = float(data.get('timeout', 2.0))
     
-    if not targets_input:
-        return jsonify({"error": "No targets provided"}), 400
+    if not ips_input:
+        return jsonify({"error": "No IP addresses provided"}), 400
+    if not ports_input:
+        return jsonify({"error": "No ports provided"}), 400
     
-    targets = [t.strip() for t in targets_input.split(',')]
+    # Parse IPs (comma or newline separated)
+    ips = [t.strip() for t in ips_input.replace('\n', ',').split(',') if t.strip()]
+    
+    # Parse Ports
+    ports = []
+    for p in ports_input.split(','):
+        p = p.strip()
+        if not p: continue
+        if '-' in p:
+            try:
+                start, end = map(int, p.split('-'))
+                ports.extend(range(start, end + 1))
+            except:
+                pass # Ignore bad ranges
+        else:
+            try:
+                ports.append(int(p))
+            except:
+                pass # Ignore non-ints
+
+    if not ports:
+         # Default ports if parsing failed but input existed? 
+         # Or strictly error? Let's default if empty list resulted from bad parse, 
+         # but plan said "Both should accept multiple...". 
+         # If user typed garbage, ports is empty.
+         return jsonify({"error": "Invalid ports provided"}), 400
+
     results = []
     
-    for target in targets:
-        try:
-            if ':' in target:
-                host, port = target.split(':')
-                port = int(port)
-            else:
-                host = target
-                port = 80 if proto == 'TCP' else 53 # Default ports
-            
+    for host in ips:
+        host_results = []
+        for port in ports:
             status = "Success"
             error_msg = None
             
             try:
                 if proto == 'TCP':
-                    with socket.create_connection((host, port), timeout=2.0):
+                    with socket.create_connection((host, port), timeout=timeout_val):
                         pass
                 else:
-                    # UDP Check: Connect to receive ICMP errors
+                    # UDP Check
                     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    sock.settimeout(2.0)
+                    sock.settimeout(timeout_val)
                     try:
                         sock.connect((host, port))
                         sock.send(b'')
-                        # Try to read response
+                        # Try to read response? valid UDP services might not reply to empty packet.
+                        # But we are keeping existing logic roughly, just updated timeout.
+                        # If we want to be "modern", we might just trust Connect for UDP effectively means "route exists" 
+                        # but rarely "port open" without app response.
+                        # However, for this task, sticking to basic reachability check.
                         sock.recv(1024)
-                        # If we get here, we got data => Success
                     except ConnectionRefusedError:
                         raise Exception("Port is closed (ICMP Unreachable)")
                     except socket.timeout:
-                        # Timeout means no response, but NO ICMP error either
-                        # We can call this "Open|Filtered" but for simple check, 
-                        # usually "Success" implies reachable. 
-                        # However, user wants to avoid "Success" for closed ports.
-                        # Setting status to "Open|Filtered"
                         status = "Open|Filtered" 
+                    except Exception as e:
+                         # Some other socket error
+                         raise e
                     finally:
                         sock.close()
             except Exception as e:
                 status = "Failed"
                 error_msg = str(e)
             
-            results.append({
-                "target": target,
-                "host": host,
+            host_results.append({
                 "port": port,
                 "status": status,
                 "error": error_msg
             })
-        except Exception as e:
-            results.append({
-                "target": target,
-                "status": "Invalid Format",
-                "error": str(e)
-            })
+        
+        results.append({
+            "host": host,
+            "protocol": proto,
+            "results": host_results
+        })
             
     return jsonify({"results": results})
 
@@ -585,39 +608,94 @@ def get_cert_details():
     import ssl
     import socket
     from OpenSSL import crypto
+    from urllib.parse import urlparse
     
     data = request.json
     target = data.get('target', '').strip()
     if not target:
         return jsonify({"error": "Target required"}), 400
     
-    if ':' in target:
-        host, port = target.split(':')
-        port = int(port)
-    else:
-        host = target
-        port = 443
-        
+    # improved input parsing
+    host = target
+    port = 443
+    
+    # Attempt to handle http/https prefixes
+    if target.lower().startswith(('http://', 'https://')):
+        parsed = urlparse(target)
+        host = parsed.hostname
+        if parsed.port:
+            port = parsed.port
+        else:
+            port = 443 if parsed.scheme == 'https' else 80
+    elif ':' in target:
+        # Handle host:port or ip:port
+        parts = target.split(':')
+        # If it's just host:port
+        if len(parts) == 2:
+            host = parts[0]
+            try:
+                port = int(parts[1])
+            except:
+                pass # invalid port, default 443
+    
     try:
-        cert_pem = ssl.get_server_certificate((host, port))
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_pem)
+        # Fetch certificate
+        if port in [587, 25]:
+            import smtplib
+            # Create unverified context to ensure we get cert even if invalid
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            
+            server = smtplib.SMTP(host, port, timeout=10)
+            server.ehlo()
+            server.starttls(context=ctx)
+            
+            # Get binary cert (DER/ASN1)
+            cert_der = server.sock.getpeercert(binary_form=True)
+            cert = crypto.load_certificate(crypto.FILETYPE_ASN1, cert_der)
+            server.quit()
+        else:
+            # Standard SSL/TLS connection
+            cert_pem = ssl.get_server_certificate((host, port))
+            cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_pem)
         
         subject = cert.get_subject()
         issuer = cert.get_issuer()
+        
+        # Helper to format ASN1 time
+        def format_asn1_date(asn1_bytes):
+            if not asn1_bytes: return "N/A"
+            try:
+                s = asn1_bytes.decode()
+                # Format is usually YYYYMMDDHHMMSSZ
+                dt = datetime.strptime(s, "%Y%m%d%H%M%SZ")
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            except:
+                return str(asn1_bytes)
+
+        # Extract SANs
+        sans = []
+        for i in range(cert.get_extension_count()):
+            ext = cert.get_extension(i)
+            if 'subjectAltName' in str(ext.get_short_name()):
+                # str(ext) returns something like "DNS:example.com, DNS:www.example.com"
+                sans = [x.strip().replace('DNS:', '') for x in str(ext).split(',')]
         
         details = {
             "subject": {k.decode(): v.decode() for k, v in subject.get_components()},
             "issuer": {k.decode(): v.decode() for k, v in issuer.get_components()},
             "version": cert.get_version(),
             "serial_number": cert.get_serial_number(),
-            "notBefore": cert.get_notBefore().decode(),
-            "notAfter": cert.get_notAfter().decode(),
+            "notBefore": format_asn1_date(cert.get_notBefore()),
+            "notAfter": format_asn1_date(cert.get_notAfter()),
             "expired": cert.has_expired(),
-            "signature_algorithm": cert.get_signature_algorithm().decode()
+            "signature_algorithm": cert.get_signature_algorithm().decode(),
+            "sans": sans
         }
         return jsonify(details)
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": f"Failed to fetch cert from {host}:{port} - {str(e)}"}), 400
 
 @app.route('/api/net/diagnostics', methods=['POST'])
 def run_diagnostics():
@@ -958,4 +1036,4 @@ def check_update():
         return jsonify({"error": str(e), "update_available": False}), 500
 
 if __name__ == '__main__':
-    app.run(debug=False, host="127.0.0.1", port=8000)
+    app.run(debug=False, host="0.0.0.0", port=8000)
