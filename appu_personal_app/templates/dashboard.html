@@ -7,12 +7,7 @@
         <p style="color: var(--text-muted);">Here's what's happening today.</p>
     </div>
     <div style="display: flex; align-items: center; gap: 20px;">
-        <div style="display: flex; flex-direction: column; align-items: flex-end;">
-            <label for="timeframeSlider"
-                style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Timeframe: <span
-                    id="timeframeValue">6</span> Week(s)</label>
-            <input type="range" id="timeframeSlider" min="1" max="12" value="6" style="width: 150px; margin-top: 5px;">
-        </div>
+
         <div style="display: flex; gap: 10px;">
             <button class="btn-premium" onclick="openCreateModal('task')">✅ New Task</button>
             <button class="btn-premium secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>

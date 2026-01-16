@@ -939,7 +939,7 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    padding: 2.5rem;
+    padding: 1.5rem 2.5rem;
     padding-bottom: 100px;
     /* Space for footer */
     overflow-y: auto;
@@ -967,7 +967,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.8rem;
     position: relative;
     z-index: 1;
 }

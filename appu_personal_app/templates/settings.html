@@ -246,6 +246,19 @@
                 </select>
             </div>
 
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h4>Timeframe</h4>
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <label for="settingsTimeframeSlider"
+                        style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">
+                        <span id="settingsTimeframeValue">6</span> Week(s)
+                    </label>
+                    <input type="range" id="settingsTimeframeSlider" min="1" max="12" value="6" style="width: 150px;"
+                        oninput="document.getElementById('settingsTimeframeValue').innerText = this.value">
+                </div>
+            </div>
+
             <div style="display: flex; justify-content: flex-end;">
                 <button class="btn" onclick="saveLayoutSettings()">Save Layout Settings</button>
             </div>
@@ -327,6 +340,10 @@
                     document.getElementById('sectionOrder1').value = settings.section_order[1];
                     document.getElementById('sectionOrder2').value = settings.section_order[2];
                 }
+                if (settings && settings.timeframe) {
+                    document.getElementById('settingsTimeframeSlider').value = settings.timeframe;
+                    document.getElementById('settingsTimeframeValue').innerText = settings.timeframe;
+                }
             });
     });
 
@@ -370,7 +387,8 @@
 
         const settings = {
             ...currentSettings,
-            section_order: order
+            section_order: order,
+            timeframe: document.getElementById('settingsTimeframeSlider').value
         };
 
         if (await persistSettings(settings)) {

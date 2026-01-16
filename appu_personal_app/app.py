@@ -42,7 +42,9 @@ def days_until_filter(date_str):
 
 @app.route('/')
 def dashboard():
-    upcoming_reminders = data_manager.get_upcoming_reminders(weeks=6)
+    settings = data_manager.get_settings()
+    timeframe = int(settings.get('timeframe', 6))
+    upcoming_reminders = data_manager.get_upcoming_reminders(weeks=timeframe)
     future_reminders = data_manager.get_upcoming_reminders(weeks=12)
     active_tasks = data_manager.get_active_tasks()
     projects = [p for p in data_manager.get_all_projects() if p.get('status') != 'Completed']
