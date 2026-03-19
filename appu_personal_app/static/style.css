@@ -1059,10 +1059,16 @@ textarea:focus {
     gap: 1.5rem;
 }
 
+.section-container {
+    /* Fluid layout: removed box styling */
+    width: 100%;
+}
+
 .section-header {
     margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .task-list,
@@ -1077,14 +1083,16 @@ textarea:focus {
 
 /* Item Cards (Reminders & Tasks) */
 .item-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-radius: 10px;
-    padding: 0.6rem;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 16px;
+    padding: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.8);
+    border-left: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
     position: relative;
     overflow: hidden;
@@ -1095,9 +1103,25 @@ textarea:focus {
     /* Prevents grid blowout */
 }
 
+.item-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg);
+    transition: all 0.75s ease;
+    z-index: 1;
+}
+
+.item-card:hover::before {
+    left: 150%;
+}
+
 .item-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 15px 35px rgba(108, 93, 211, 0.15);
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 20px 40px rgba(108, 93, 211, 0.2);
+    border-color: rgba(108, 93, 211, 0.4);
     border-color: var(--primary-color);
 }
 
@@ -3034,8 +3058,6 @@ textarea:focus {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--primary-color);
 }
 
 /* Status badges for project statuses */

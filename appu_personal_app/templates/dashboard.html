@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="header">
+<div class="header" style="margin-bottom: 2rem;">
     <div>
-        <h1>Welcome Back - {{ user_name }} 👋</h1>
-        <p style="color: var(--text-muted);">Here's what's happening today.</p>
+        <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem; background: -webkit-linear-gradient(45deg, var(--primary-color), var(--accent-color)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Welcome Back, {{ user_name }} ✨</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">Here's what's happening today.</p>
     </div>
     <div style="display: flex; align-items: center; gap: 20px;">
 
-        <div style="display: flex; gap: 10px;">
-            <button class="btn-premium" onclick="openCreateModal('task')">✅ New Task</button>
-            <button class="btn-premium secondary" onclick="openCreateModal('reminder')">🔔 New Reminder</button>
-            <button class="btn-premium accent" onclick="openKBModal()">🧠 New KB Item</button>
-            <button class="btn-premium purple" onclick="openCreateProjectModal()">📁 New Project</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-premium" onclick="openCreateModal('task')" style="box-shadow: 0 4px 15px rgba(108, 93, 211, 0.3);">✅ New Task</button>
+            <button class="btn-premium secondary" onclick="openCreateModal('reminder')" style="box-shadow: 0 4px 15px rgba(255, 162, 192, 0.3);">🔔 New Reminder</button>
+            <button class="btn-premium accent" onclick="openKBModal()" style="box-shadow: 0 4px 15px rgba(0, 210, 252, 0.3);">🧠 New KB Item</button>
+            <button class="btn-premium purple" onclick="openCreateProjectModal()" style="box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);">📁 New Project</button>
         </div>
     </div>
 </div>
@@ -23,7 +23,7 @@
     <!-- Active Tasks Section -->
     <div class="section-container" data-section="tasks">
         <div class="section-header">
-            <h3>✅ Active Tasks</h3>
+            <h3 style="display: flex; align-items: center; gap: 10px; font-size: 1.4rem; color: var(--text-color);"><span style="background: var(--primary-glow); padding: 8px 10px; border-radius: 12px; display: inline-flex; box-shadow: 0 4px 15px rgba(108, 93, 211, 0.2);">✅</span> Active Tasks</h3>
         </div>
         <div class="task-list" data-sortable="tasks">
             {% if active_tasks %}
@@ -61,7 +61,7 @@
     <!-- Projects Section -->
     <div class="section-container" data-section="projects" style="margin-top: 1rem;">
         <div class="section-header">
-            <h3>📁 Projects</h3>
+            <h3 style="display: flex; align-items: center; gap: 10px; font-size: 1.4rem; color: var(--text-color);"><span style="background: rgba(156, 39, 176, 0.15); padding: 8px 10px; border-radius: 12px; display: inline-flex; box-shadow: 0 4px 15px rgba(156, 39, 176, 0.2);">📁</span> Projects</h3>
         </div>
         <div class="project-list" data-sortable="projects">
             {% if projects %}
@@ -111,7 +111,7 @@
 <!-- Upcoming Reminders Section -->
 <div class="section-container" data-section="reminders" style="margin-top: 1rem;">
     <div class="section-header">
-        <h3>🔔 Reminders</h3>
+        <h3 style="display: flex; align-items: center; gap: 10px; font-size: 1.4rem; color: var(--text-color);"><span style="background: rgba(255, 162, 192, 0.15); padding: 8px 10px; border-radius: 12px; display: inline-flex; box-shadow: 0 4px 15px rgba(255, 162, 192, 0.2);">🔔</span> Reminders</h3>
     </div>
     <div class="reminder-list" data-sortable="reminders">
         {% if upcoming_reminders %}
