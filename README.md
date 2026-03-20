@@ -1,4 +1,4 @@
-# Axolotl Personal Dashboard 🦎
+# Axolotl Personal App 🦎
 
 Welcome to **Axolotl**, a modern, comprehensive personal productivity and organization dashboard built to "regenerate" your daily workflow. With an emphasis on fluid design, glassmorphism, and intuitive item management, Axolotl makes organizing your life visually stunning and effortlessly practical.
 
