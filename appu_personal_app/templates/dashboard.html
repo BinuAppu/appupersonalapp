@@ -27,9 +27,11 @@
         </div>
         <div class="task-list" data-sortable="tasks">
             {% if active_tasks %}
+            {% set alert_days = settings.task_alert_days if settings.task_alert_days is defined else 7 %}
             {% for task in active_tasks %}
-            <div class="item-card" draggable="true" data-item-id="{{ task.id }}" data-item-type="task"
-                onclick="viewComments('task', '{{ task.id }}', '{{ task.title }}')">
+            {% set needs_alert = (not task.comments) or (task.comments[-1].timestamp|days_since >= alert_days) %}
+            <div class="item-card{% if needs_alert %} task-alert-border{% endif %}" draggable="true" data-item-id="{{ task.id }}" data-item-type="task"
+                onclick="viewComments('task', '{{ task.id }}', '{{ task.title }}')" {% if needs_alert %}title="No comment activity in {{ alert_days }}+ days"{% endif %}>
                 <div class="item-card-header">
                     <div style="flex: 1;">
                         <h4 class="item-card-title">{{ task.title }}</h4>

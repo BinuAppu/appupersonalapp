@@ -259,6 +259,22 @@
                 </div>
             </div>
 
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Task Alert Threshold</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Show a red alert dot on task cards with no comment activity within this many days (or never commented).</p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <label for="taskAlertDaysSlider"
+                        style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">
+                        <span id="taskAlertDaysValue">7</span> Day(s)
+                    </label>
+                    <input type="range" id="taskAlertDaysSlider" min="1" max="30" value="7" style="width: 150px;"
+                        oninput="document.getElementById('taskAlertDaysValue').innerText = this.value">
+                </div>
+            </div>
+
             <div style="display: flex; justify-content: flex-end;">
                 <button class="btn" onclick="saveLayoutSettings()">Save Layout Settings</button>
             </div>
@@ -344,6 +360,10 @@
                     document.getElementById('settingsTimeframeSlider').value = settings.timeframe;
                     document.getElementById('settingsTimeframeValue').innerText = settings.timeframe;
                 }
+                if (settings && settings.task_alert_days) {
+                    document.getElementById('taskAlertDaysSlider').value = settings.task_alert_days;
+                    document.getElementById('taskAlertDaysValue').innerText = settings.task_alert_days;
+                }
             });
     });
 
@@ -388,7 +408,8 @@
         const settings = {
             ...currentSettings,
             section_order: order,
-            timeframe: document.getElementById('settingsTimeframeSlider').value
+            timeframe: document.getElementById('settingsTimeframeSlider').value,
+            task_alert_days: parseInt(document.getElementById('taskAlertDaysSlider').value)
         };
 
         if (await persistSettings(settings)) {

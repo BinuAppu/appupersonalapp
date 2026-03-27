@@ -21,6 +21,15 @@ def short_date_filter(value):
     except:
         return value
 
+@app.template_filter('days_since')
+def days_since_filter(value):
+    if not value: return 9999
+    try:
+        dt = datetime.fromisoformat(value) if isinstance(value, str) else value
+        return (datetime.now() - dt).days
+    except:
+        return 9999
+
 @app.template_filter('days_until')
 def days_until_filter(date_str):
     if not date_str: return 999

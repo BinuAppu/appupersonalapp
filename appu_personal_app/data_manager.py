@@ -53,7 +53,8 @@ class DataManager:
                     "nearing_1_week": "#E53935",   # Red
                     "overdue": "#8B0000"           # Dark Red
                 },
-                "section_order": ["tasks", "projects", "reminders"]
+                "section_order": ["tasks", "projects", "reminders"],
+                "task_alert_days": 7
             }
             self.save_settings(default_settings)
             return default_settings

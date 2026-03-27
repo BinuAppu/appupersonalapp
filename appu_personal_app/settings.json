@@ -1,12 +1,14 @@
 {
     "colors": {
-        "nearing_2_weeks": "#F4C430",
         "nearing_1_week": "#E53935",
+        "nearing_2_weeks": "#F4C430",
         "overdue": "#8B0000"
     },
     "section_order": [
         "tasks",
         "projects",
         "reminders"
-    ]
+    ],
+    "timeframe": "6",
+    "task_alert_days": 7
 }
