@@ -59,13 +59,14 @@ def dashboard():
     projects = [p for p in data_manager.get_all_projects() if p.get('status') != 'Completed']
     user_name = data_manager.get_user_name()
     settings = data_manager.get_settings()
-    return render_template('dashboard.html', 
+    return render_template('dashboard.html',
                            upcoming_reminders=upcoming_reminders,
                            future_reminders=future_reminders,
                            active_tasks=active_tasks,
                            projects=projects,
                            user_name=user_name,
-                           settings=settings)
+                           settings=settings,
+                           now=datetime.now())
 
 @app.route('/all')
 def all_items():

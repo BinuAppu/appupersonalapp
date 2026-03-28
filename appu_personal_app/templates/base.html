@@ -9,49 +9,32 @@
         href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&family=Merriweather:wght@300;400;700&family=Montserrat:wght@400;500;600&family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@400;600&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Raleway:wght@400;500;600&family=Roboto:wght@400;500;700&family=Source+Code+Pro:wght@400;600&family=Ubuntu:wght@400;500;700&family=Work+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- FullCalendar CSS -->
-    <!-- FullCalendar CSS (Styles injected by v6 JS) -->
 </head>
 
 <body>
-    <button class="hamburger" id="hamburgerBtn">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <div class="sidebar" id="sidebar">
-        <div class="logo">
-            <img src="{{ url_for('static', filename='axolotl_logo.png') }}" alt="Axolotl Logo" class="logo-img">
-            <div class="logo-text">Axolotl</div>
-            <div class="slogan">Built to Regenerate</div>
+    <!-- Top Navigation Bar -->
+    <header class="topnav" id="topnav">
+        <div class="topnav-brand">
+            <img src="{{ url_for('static', filename='axolotl_logo.png') }}" alt="Axolotl" class="topnav-logo">
+            <span class="topnav-name">Axolotl</span>
         </div>
-        <nav>
-            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
-                <span>🏠</span> Dashboard
-            </a>
-            <a href="/knowledge" class="nav-link {% if request.path == '/knowledge' %}active{% endif %}">
-                <span>🧠</span> Knowledge Base
-            </a>
-            <a href="/calendar" class="nav-link {% if request.path == '/calendar' %}active{% endif %}">
-                <span>📅</span> Calendar
-            </a>
-            <a href="/secure" class="nav-link {% if request.path == '/secure' %}active{% endif %}">
-                <span>🔒</span> Secure
-            </a>
-            <a href="/small-apps"
-                class="nav-link {% if request.path == '/small-apps' or request.path.startswith('/small-apps/') %}active{% endif %}">
-                <span>🚀</span> Small Apps
-            </a>
-            <a href="/all" class="nav-link {% if request.path == '/all' %}active{% endif %}">
-                <span>📝</span> Data Base
-            </a>
-            <a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">
-                <span>⚙️</span> Settings
-            </a>
+
+        <nav class="topnav-links" id="sidebar">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">🏠 Dashboard</a>
+            <a href="/knowledge" class="nav-link {% if request.path == '/knowledge' %}active{% endif %}">🧠 Knowledge</a>
+            <a href="/calendar" class="nav-link {% if request.path == '/calendar' %}active{% endif %}">📅 Calendar</a>
+            <a href="/secure" class="nav-link {% if request.path == '/secure' %}active{% endif %}">🔒 Secure</a>
+            <a href="/small-apps" class="nav-link {% if request.path == '/small-apps' or request.path.startswith('/small-apps/') %}active{% endif %}">🚀 Tools</a>
+            <a href="/all" class="nav-link {% if request.path == '/all' %}active{% endif %}">📝 Database</a>
+            <a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">⚙️ Settings</a>
         </nav>
 
-    </div>
+        <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="main-content">
         {% block content %}{% endblock %}
@@ -62,7 +45,6 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2 id="modalTitle">Create New Item</h2>
-
             <form id="reminderForm" style="display:none; margin-top: 20px;">
                 <div class="input-group">
                     <input type="text" id="remTitle" placeholder="Reminder Title" required>
@@ -94,7 +76,6 @@
                 </div>
                 <button type="submit" class="btn">Create Reminder</button>
             </form>
-
             <form id="taskForm" style="display:none; margin-top: 20px;">
                 <div class="input-group">
                     <input type="text" id="taskTitle" placeholder="Task Title" required>
@@ -121,7 +102,6 @@
         <div class="modal-content">
             <span class="close" onclick="closeEditModal()">&times;</span>
             <h2 id="editModalTitle">Edit Item</h2>
-
             <form id="editReminderForm" style="display:none; margin-top: 20px;">
                 <input type="hidden" id="editRemId">
                 <div class="input-group">
@@ -154,7 +134,6 @@
                 </div>
                 <button type="submit" class="btn">Update Reminder</button>
             </form>
-
             <form id="editTaskForm" style="display:none; margin-top: 20px;">
                 <input type="hidden" id="editTaskId">
                 <div class="input-group">
@@ -182,9 +161,7 @@
         <div class="modal-content">
             <span class="close" onclick="closeCommentsModal()">&times;</span>
             <h2 id="commentsModalTitle">Task Comments</h2>
-            <div id="commentsList" class="comments-list">
-                <!-- Comments will be injected here -->
-            </div>
+            <div id="commentsList" class="comments-list"></div>
             <div style="margin-top: 1.5rem;">
                 <div class="input-group">
                     <input type="text" id="newCommentInput" placeholder="Add a comment...">
@@ -294,9 +271,7 @@
         <div class="modal-content">
             <span class="close" onclick="closeProjectTaskCommentsModal()">&times;</span>
             <h2 id="projectTaskCommentsModalTitle">Task Comments</h2>
-            <div id="projectTaskCommentsList" class="comments-list">
-                <!-- Comments will be injected here -->
-            </div>
+            <div id="projectTaskCommentsList" class="comments-list"></div>
             <div style="margin-top: 1.5rem;">
                 <div class="input-group">
                     <input type="text" id="newProjectTaskCommentInput" placeholder="Add a comment...">
@@ -306,7 +281,6 @@
         </div>
     </div>
 
-    <!-- FullCalendar JS (v6 includes CSS) -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     {% block scripts %}{% endblock %}
