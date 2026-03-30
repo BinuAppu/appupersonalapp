@@ -55,10 +55,21 @@ def dashboard():
     timeframe = int(settings.get('timeframe', 6))
     upcoming_reminders = data_manager.get_upcoming_reminders(weeks=timeframe)
     future_reminders = data_manager.get_upcoming_reminders(weeks=12)
+    all_tasks = data_manager.get_all_tasks()
     active_tasks = data_manager.get_active_tasks()
-    projects = [p for p in data_manager.get_all_projects() if p.get('status') != 'Completed']
+    all_projects = data_manager.get_all_projects()
+    projects = [p for p in all_projects if p.get('status') != 'Completed']
+    all_reminders = data_manager.get_all_reminders()
     user_name = data_manager.get_user_name()
     settings = data_manager.get_settings()
+    counts = {
+        'tasks_active': len(active_tasks),
+        'tasks_done': len([t for t in all_tasks if t.get('status') == 'Completed']),
+        'projects_active': len(projects),
+        'projects_done': len([p for p in all_projects if p.get('status') == 'Completed']),
+        'reminders_upcoming': len(upcoming_reminders),
+        'reminders_total': len(all_reminders),
+    }
     return render_template('dashboard.html',
                            upcoming_reminders=upcoming_reminders,
                            future_reminders=future_reminders,
@@ -66,6 +77,7 @@ def dashboard():
                            projects=projects,
                            user_name=user_name,
                            settings=settings,
+                           counts=counts,
                            now=datetime.now())
 
 @app.route('/all')
