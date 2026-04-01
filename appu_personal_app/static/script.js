@@ -47,21 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (schemeSelect) {
-            const validThemes = [
-                'hackthebox', 'dracula', 'ocean',
-                'solarized-light', 'solarized-dark',
-                'monokai', 'nord',
-                'gruvbox-light', 'gruvbox-dark',
-                'cyberpunk', 'forest', 'sunset', 'midnight',
-                'atom-one-dark', 'atom-one-light', 'ayu-dark', 'ayu-light', 'ayu-mirage',
-                'base16-tomorrow-dark', 'base16-tomorrow-light', 'catppuccin-latte',
-                'catppuccin-frappe', 'catppuccin-macchiato', 'catppuccin-mocha', 'cobalt2',
-                'darcula', 'dracula-soft', 'github-dark', 'github-light', 'jellybeans',
-                'material-darker', 'material-lighter', 'material-ocean', 'material-palenight',
-                'monokai-pro', 'night-owl', 'shades-of-purple', 'synthwave-84',
-                'tokyo-night', 'zenburn', 'solarized-ocean', 'deep-purple', 'matrix-green',
-                'inferno-hacker'
-            ];
+            const validThemes = ['dragon', 'central-intelligence'];
             if (validThemes.includes(theme)) {
                 schemeSelect.value = theme;
             } else {
@@ -91,6 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedFont) {
         document.body.style.fontFamily = savedFont;
     }
+
+    // Apply card width from localStorage
+    const cardSizes = [120, 145, 165, 185, 210, 235, 265, 295, 330, 370];
+    const savedCardLevel = parseInt(localStorage.getItem('cardSize') || '5');
+    const cardPx = cardSizes[Math.min(Math.max(savedCardLevel, 1), 10) - 1];
+    document.documentElement.style.setProperty('--card-min-size', cardPx + 'px');
+
+    // Apply card height from localStorage
+    const cardHeights = [0, 75, 90, 105, 120, 140, 165, 190, 220, 255];
+    const savedCardHeight = parseInt(localStorage.getItem('cardHeight') || '1');
+    const cardHeightPx = cardHeights[Math.min(Math.max(savedCardHeight, 1), 10) - 1];
+    document.documentElement.style.setProperty('--card-min-height', cardHeightPx + 'px');
 
     // Modal Logic
     const modal = document.getElementById("createModal");

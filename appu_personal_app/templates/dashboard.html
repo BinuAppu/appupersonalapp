@@ -23,6 +23,10 @@
     <div class="section-container" data-section="tasks">
         <div class="section-header">
             <h3 class="section-title">✅ Active Tasks</h3>
+            <div class="section-count-badges">
+                <span class="count-badge count-active">{{ counts.tasks_active }} active</span>
+                <span class="count-badge count-done">{{ counts.tasks_done }} done</span>
+            </div>
         </div>
         <div class="task-list" data-sortable="tasks">
             {% if active_tasks %}
@@ -63,6 +67,10 @@
     <div class="section-container" data-section="projects">
         <div class="section-header">
             <h3 class="section-title">📁 Projects</h3>
+            <div class="section-count-badges">
+                <span class="count-badge count-active">{{ counts.projects_active }} active</span>
+                <span class="count-badge count-done">{{ counts.projects_done }} done</span>
+            </div>
         </div>
         <div class="project-list" data-sortable="projects">
             {% if projects %}
@@ -110,6 +118,10 @@
     <div class="section-container" data-section="reminders">
         <div class="section-header">
             <h3 class="section-title">🔔 Reminders</h3>
+            <div class="section-count-badges">
+                <span class="count-badge count-active">{{ counts.reminders_upcoming }} upcoming</span>
+                <span class="count-badge count-done">{{ counts.reminders_total }} total</span>
+            </div>
         </div>
         <div class="reminder-list" data-sortable="reminders">
             {% if upcoming_reminders %}

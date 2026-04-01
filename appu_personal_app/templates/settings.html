@@ -72,50 +72,8 @@
                 <select id="colorSchemeSelect" onchange="changeColorScheme(this.value)"
                     style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
                     <option value="default">Default</option>
-                    <option value="hackthebox">Hackthebox</option>
-                    <option value="dracula">Dracula</option>
-                    <option value="ocean">Ocean</option>
-                    <option value="solarized-light">Solarized Light</option>
-                    <option value="solarized-dark">Solarized Dark</option>
-                    <option value="monokai">Monokai</option>
-                    <option value="nord">Nord</option>
-                    <option value="gruvbox-light">Gruvbox Light</option>
-                    <option value="gruvbox-dark">Gruvbox Dark</option>
-                    <option value="cyberpunk">Cyberpunk</option>
-                    <option value="forest">Forest</option>
-                    <option value="sunset">Sunset</option>
-                    <option value="midnight">Midnight</option>
-                    <option value="atom-one-dark">Atom One Dark</option>
-                    <option value="atom-one-light">Atom One Light</option>
-                    <option value="ayu-dark">Ayu Dark</option>
-                    <option value="ayu-light">Ayu Light</option>
-                    <option value="ayu-mirage">Ayu Mirage</option>
-                    <option value="base16-tomorrow-dark">Base16 Tomorrow Dark</option>
-                    <option value="base16-tomorrow-light">Base16 Tomorrow Light</option>
-                    <option value="catppuccin-latte">Catppuccin Latte</option>
-                    <option value="catppuccin-frappe">Catppuccin Frappe</option>
-                    <option value="catppuccin-macchiato">Catppuccin Macchiato</option>
-                    <option value="catppuccin-mocha">Catppuccin Mocha</option>
-                    <option value="cobalt2">Cobalt2</option>
-                    <option value="darcula">Darcula</option>
-                    <option value="dracula-soft">Dracula Soft</option>
-                    <option value="github-dark">GitHub Dark</option>
-                    <option value="github-light">GitHub Light</option>
-                    <option value="jellybeans">Jellybeans</option>
-                    <option value="material-darker">Material Darker</option>
-                    <option value="material-lighter">Material Lighter</option>
-                    <option value="material-ocean">Material Ocean</option>
-                    <option value="material-palenight">Material Palenight</option>
-                    <option value="monokai-pro">Monokai Pro</option>
-                    <option value="night-owl">Night Owl</option>
-                    <option value="shades-of-purple">Shades of Purple</option>
-                    <option value="synthwave-84">Synthwave '84</option>
-                    <option value="tokyo-night">Tokyo Night</option>
-                    <option value="zenburn">Zenburn</option>
-                    <option value="solarized-ocean">Solarized Ocean</option>
-                    <option value="deep-purple">Deep Purple</option>
-                    <option value="matrix-green">Matrix Green</option>
-                    <option value="inferno-hacker">Inferno Hacker</option>
+                    <option value="dragon">Dragon</option>
+                    <option value="central-intelligence">Central Intelligence</option>
                 </select>
             </div>
 
@@ -275,6 +233,40 @@
                 </div>
             </div>
 
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Card Width</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Adjust minimum width of dashboard cards.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">S</span>
+                        <input type="range" id="cardSizeSlider" min="1" max="10" value="5" style="width: 160px;"
+                            oninput="previewCardSize(this.value)">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">L</span>
+                    </div>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Level <span id="cardSizeValue">5</span> / 10</label>
+                </div>
+            </div>
+
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Card Height</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Set minimum height of dashboard cards.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">S</span>
+                        <input type="range" id="cardHeightSlider" min="1" max="10" value="1" style="width: 160px;"
+                            oninput="previewCardHeight(this.value)">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">L</span>
+                    </div>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Level <span id="cardHeightValue">1</span> / 10</label>
+                </div>
+            </div>
+
             <div style="display: flex; justify-content: flex-end;">
                 <button class="btn" onclick="saveLayoutSettings()">Save Layout Settings</button>
             </div>
@@ -365,6 +357,16 @@
                     document.getElementById('taskAlertDaysValue').innerText = settings.task_alert_days;
                 }
             });
+
+        // Init card width
+        const savedCardSize = parseInt(localStorage.getItem('cardSize') || '5');
+        document.getElementById('cardSizeSlider').value = savedCardSize;
+        document.getElementById('cardSizeValue').innerText = savedCardSize;
+
+        // Init card height
+        const savedCardHeight = parseInt(localStorage.getItem('cardHeight') || '1');
+        document.getElementById('cardHeightSlider').value = savedCardHeight;
+        document.getElementById('cardHeightValue').innerText = savedCardHeight;
     });
 
     function updateColorPreviews() {
@@ -389,6 +391,28 @@
         await persistSettings(settings);
     }
 
+    function previewCardSize(level) {
+        document.getElementById('cardSizeValue').innerText = level;
+        applyCardSize(parseInt(level));
+    }
+
+    function applyCardSize(level) {
+        const sizes = [120, 145, 165, 185, 210, 235, 265, 295, 330, 370];
+        const px = sizes[Math.min(Math.max(level, 1), 10) - 1];
+        document.documentElement.style.setProperty('--card-min-size', px + 'px');
+    }
+
+    function previewCardHeight(level) {
+        document.getElementById('cardHeightValue').innerText = level;
+        applyCardHeight(parseInt(level));
+    }
+
+    function applyCardHeight(level) {
+        const heights = [0, 75, 90, 105, 120, 140, 165, 190, 220, 255];
+        const px = heights[Math.min(Math.max(level, 1), 10) - 1];
+        document.documentElement.style.setProperty('--card-min-height', px + 'px');
+    }
+
     async function saveLayoutSettings() {
         const order = [
             document.getElementById('sectionOrder0').value,
@@ -401,6 +425,14 @@
             alert('Each section must be unique! Please choose a different order.');
             return;
         }
+
+        const cardSize = parseInt(document.getElementById('cardSizeSlider').value);
+        localStorage.setItem('cardSize', cardSize);
+        applyCardSize(cardSize);
+
+        const cardHeight = parseInt(document.getElementById('cardHeightSlider').value);
+        localStorage.setItem('cardHeight', cardHeight);
+        applyCardHeight(cardHeight);
 
         const settingsRes = await fetch('/api/settings');
         const currentSettings = await settingsRes.json();
