@@ -102,13 +102,6 @@
                             <span style="margin-left: 6px;">{{ project.end_date }}</span>
                         </div>
                     </div>
-                    <div class="item-card-actions">
-                        <span class="icon-btn delete-icon delete-btn" data-type="projects" data-id="{{ project.id }}"
-                            onclick="event.stopPropagation()" title="Delete project"
-                            {% if proj_bg %}style="filter: brightness(0) invert(1);"{% endif %}>
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h16M9 7V4.5a1 1 0 011-1h4a1 1 0 011 1V7m2 0v13a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 016 20V7h12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                    </div>
                 </div>
                 {% if project.description %}
                 <div class="latest-comment-preview" {% if proj_bg %}style="color: rgba(255,255,255,0.9); border-top-color: rgba(255,255,255,0.25);"{% endif %}>
@@ -153,13 +146,6 @@
                         <div class="item-card-meta" {% if rem_bg %}style="color: rgba(255,255,255,0.85);"{% endif %}>
                             {{ rem.display_date }} · {{ rem.recurrence }}
                         </div>
-                    </div>
-                    <div class="item-card-actions">
-                        <span class="icon-btn delete-icon delete-btn" data-type="reminders" data-id="{{ rem.id }}"
-                            onclick="event.stopPropagation()" title="Delete reminder"
-                            {% if rem_bg %}style="filter: brightness(0) invert(1);"{% endif %}>
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h16M9 7V4.5a1 1 0 011-1h4a1 1 0 011 1V7m2 0v13a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 016 20V7h12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
                     </div>
                 </div>
                 {% if rem.comments %}
