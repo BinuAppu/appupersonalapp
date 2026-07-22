@@ -413,6 +413,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const modalTitle = document.getElementById('commentsModalTitle');
         const submitBtn = document.getElementById('submitCommentBtn');
         const input = document.getElementById('newCommentInput');
+        const completeRow = document.getElementById('taskCompleteRow');
+        const completeCheckbox = document.getElementById('taskCompleteCheckbox');
+        const completeBtn = document.getElementById('completeTaskBtn');
         modalTitle.innerText = `Comments: ${itemTitle}`;
         commentsList.innerHTML = '<p style="text-align:center;">Loading...</p>';
         commentsModal.style.display = "block";
@@ -434,6 +437,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Clear input
         input.value = '';
+
+        // Show the checkbox + Complete button only for active tasks
+        if (itemType === 'task' && item && item.status !== 'Completed') {
+            completeRow.style.display = 'flex';
+            completeCheckbox.checked = false;
+            completeBtn.disabled = true;
+            completeCheckbox.onchange = () => {
+                completeBtn.disabled = !completeCheckbox.checked;
+            };
+            completeBtn.onclick = async () => {
+                if (!completeCheckbox.checked) return;
+                const statusRes = await fetch(`/api/tasks/${itemId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'Completed' })
+                });
+                if (statusRes.ok) {
+                    closeCommentsModal();
+                    window.location.reload();
+                } else {
+                    alert('Failed to complete task');
+                }
+            };
+        } else {
+            completeRow.style.display = 'none';
+        }
+
         // Set up event handlers
         submitBtn.onclick = () => submitComment(itemType, itemId, 'newCommentInput', itemTitle);
         input.onkeypress = (e) => {
