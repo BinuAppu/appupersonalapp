@@ -534,6 +534,10 @@ def trace_dns():
 def net_tools():
     return render_template('net_tools.html')
 
+@app.route('/small-apps/api-tester')
+def api_tester():
+    return render_template('api_tester.html')
+
 @app.route('/api/net/check', methods=['POST'])
 def check_connectivity():
     import socket
