@@ -1,5 +1,8 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+import csv
+import io
 import os
+import re
 import shutil
 import time
 import requests
@@ -48,6 +51,334 @@ def days_until_filter(date_str):
         return delta
     except:
         return 999
+
+AD_UAC_FLAGS = {
+    "ACCOUNTDISABLE": 0x0002,
+    "LOCKOUT": 0x0010,
+    "PASSWD_NOTREQD": 0x0020,
+    "PASSWD_CANT_CHANGE": 0x0040,
+    "ENCRYPTED_TEXT_PWD_ALLOWED": 0x0080,
+    "DONT_EXPIRE_PASSWORD": 0x10000,
+    "SMARTCARD_REQUIRED": 0x40000,
+    "TRUSTED_FOR_DELEGATION": 0x80000,
+    "NOT_DELEGATED": 0x100000,
+    "USE_DES_KEY_ONLY": 0x200000,
+    "DONT_REQ_PREAUTH": 0x400000,
+    "PASSWORD_EXPIRED": 0x800000,
+    "TRUSTED_TO_AUTH_FOR_DELEGATION": 0x1000000,
+}
+
+AD_RISK_DEFINITIONS = {
+    "disabled_users": {
+        "title": "Disabled Users",
+        "severity": "info",
+        "description": "Accounts marked disabled in AD.",
+    },
+    "inactive_users": {
+        "title": "Inactive Users",
+        "severity": "high",
+        "description": "Enabled accounts with no recent logon activity.",
+    },
+    "password_never_expires": {
+        "title": "Password Never Expires",
+        "severity": "high",
+        "description": "Accounts where password expiry is bypassed.",
+    },
+    "password_not_required": {
+        "title": "Password Not Required",
+        "severity": "critical",
+        "description": "Accounts that may be allowed to exist without a password.",
+    },
+    "cannot_change_password": {
+        "title": "Cannot Change Password",
+        "severity": "medium",
+        "description": "Accounts flagged or exported as unable to change password.",
+    },
+    "asrep_roastable": {
+        "title": "AS-REP Roastable",
+        "severity": "critical",
+        "description": "Kerberos pre-authentication is not required.",
+    },
+    "spn_kerberoast": {
+        "title": "SPN / Kerberoast Exposure",
+        "severity": "high",
+        "description": "User accounts with SPNs can be targeted for Kerberoasting.",
+    },
+    "delegation_risk": {
+        "title": "Delegation Risk",
+        "severity": "critical",
+        "description": "Accounts trusted for unconstrained or protocol-transition delegation.",
+    },
+    "weak_encryption": {
+        "title": "Weak Kerberos Encryption",
+        "severity": "high",
+        "description": "DES/RC4-only or no AES-capable encryption indicators.",
+    },
+    "reversible_password": {
+        "title": "Reversible Password Storage",
+        "severity": "critical",
+        "description": "Accounts allowing encrypted text passwords.",
+    },
+    "privileged_account": {
+        "title": "Privileged Account",
+        "severity": "high",
+        "description": "AdminCount or privileged group membership was detected.",
+    },
+    "stale_password": {
+        "title": "Stale Password",
+        "severity": "medium",
+        "description": "Password has not changed within the configured threshold.",
+    },
+    "password_expired": {
+        "title": "Password Expired",
+        "severity": "medium",
+        "description": "Password is expired or must be changed.",
+    },
+    "smartcard_missing": {
+        "title": "Privileged Without Smart Card",
+        "severity": "medium",
+        "description": "Privileged account without a smart-card-required indicator.",
+    },
+    "locked_out": {
+        "title": "Locked Out",
+        "severity": "low",
+        "description": "Accounts currently marked as locked out.",
+    },
+}
+
+AD_HEADER_ALIASES = {
+    "name": ["name", "displayname", "cn", "samaccountname", "userprincipalname"],
+    "sam": ["samaccountname", "samaccount", "accountname", "logonname"],
+    "upn": ["userprincipalname", "upn"],
+    "enabled": ["enabled", "isaccountenabled", "accountenabled"],
+    "uac": ["useraccountcontrol", "uac", "useraccountcontrolvalue"],
+    "password_never_expires": ["passwordneverexpires", "pwdneverexpires", "dontexpirepassword"],
+    "password_not_required": ["passwordnotrequired", "passwdnotreqd"],
+    "cannot_change_password": ["cannotchangepassword", "passwordcantchange", "passwd_cant_change"],
+    "preauth_not_required": ["doesnotrequirepreauth", "donotrequirekerberospreauthentication", "dontreqpreauth", "preauthnotrequired"],
+    "last_logon": ["lastlogontimestamp", "lastlogondate", "lastlogon", "lastlogontime", "lastlogonldap"],
+    "pwd_last_set": ["pwdlastset", "passwordlastset", "pwdlastsetdate"],
+    "spn": ["serviceprincipalname", "serviceprincipalnames", "spn"],
+    "admin_count": ["admincount"],
+    "member_of": ["memberof", "groups", "memberofgroups"],
+    "delegation": ["trustedfordelegation", "trustedtoauthfordelegation", "accountnotdelegated"],
+    "enc_types": ["msds-supportedencryptiontypes", "msdssupportedencryptiontypes", "supportedencryptiontypes"],
+    "created": ["whencreated", "created", "creationdate"],
+    "locked_out": ["lockedout", "islockedout"],
+    "password_expired": ["passwordexpired", "pwdexpired"],
+    "smartcard_required": ["smartcardlogonrequired", "smartcardrequired"],
+}
+
+PRIVILEGED_GROUP_MARKERS = [
+    "domain admins", "enterprise admins", "schema admins", "administrators",
+    "account operators", "server operators", "backup operators", "dnsadmins",
+    "group policy creator owners", "organization management",
+]
+
+def _normalize_header(value):
+    return re.sub(r"[^a-z0-9]", "", (value or "").strip().lower())
+
+def _first_value(row, header_map, logical_name):
+    for alias in AD_HEADER_ALIASES.get(logical_name, []):
+        key = header_map.get(_normalize_header(alias))
+        if key is not None:
+            value = row.get(key)
+            if value is not None and str(value).strip() != "":
+                return str(value).strip()
+    return ""
+
+def _parse_bool(value):
+    if value is None:
+        return None
+    text = str(value).strip().lower()
+    if text in {"true", "yes", "y", "1", "enabled", "enable", "on"}:
+        return True
+    if text in {"false", "no", "n", "0", "disabled", "disable", "off"}:
+        return False
+    return None
+
+def _parse_int(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        if text.lower().startswith("0x"):
+            return int(text, 16)
+        return int(float(text))
+    except (TypeError, ValueError):
+        return None
+
+def _parse_ad_datetime(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text or text in {"0", "9223372036854775807", "16010101000000.0Z"}:
+        return None
+    filetime = _parse_int(text)
+    if filetime and filetime > 100000000000000000:
+        try:
+            return datetime(1601, 1, 1) + timedelta(microseconds=filetime / 10)
+        except (OverflowError, ValueError):
+            return None
+    formats = [
+        "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d",
+        "%m/%d/%Y %H:%M:%S", "%m/%d/%Y", "%d/%m/%Y %H:%M:%S", "%d/%m/%Y",
+        "%Y%m%d%H%M%S.0Z", "%Y%m%d%H%M%SZ",
+    ]
+    clean_text = text.replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(clean_text).replace(tzinfo=None)
+    except ValueError:
+        pass
+    for fmt in formats:
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    return None
+
+def _has_uac_flag(uac_value, flag_name):
+    return uac_value is not None and bool(uac_value & AD_UAC_FLAGS[flag_name])
+
+def _add_risk(account_risks, risk_counts, risk_key, evidence):
+    account_risks.append({
+        "key": risk_key,
+        "title": AD_RISK_DEFINITIONS[risk_key]["title"],
+        "severity": AD_RISK_DEFINITIONS[risk_key]["severity"],
+        "evidence": evidence,
+    })
+    risk_counts[risk_key] = risk_counts.get(risk_key, 0) + 1
+
+def _analyze_ad_rows(rows, headers, inactive_days=90, stale_password_days=180):
+    header_map = {_normalize_header(header): header for header in headers}
+    now = datetime.now()
+    risk_counts = {key: 0 for key in AD_RISK_DEFINITIONS}
+    severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+    analyzed_accounts = []
+
+    for index, row in enumerate(rows, start=1):
+        uac = _parse_int(_first_value(row, header_map, "uac"))
+        enabled_value = _parse_bool(_first_value(row, header_map, "enabled"))
+        is_disabled = _has_uac_flag(uac, "ACCOUNTDISABLE") or enabled_value is False
+        is_enabled = not is_disabled
+        account_risks = []
+
+        sam = _first_value(row, header_map, "sam")
+        upn = _first_value(row, header_map, "upn")
+        display_name = _first_value(row, header_map, "name") or sam or upn or f"Row {index}"
+        member_of = _first_value(row, header_map, "member_of").lower()
+        admin_count = _parse_int(_first_value(row, header_map, "admin_count"))
+        is_privileged = admin_count == 1 or any(marker in member_of for marker in PRIVILEGED_GROUP_MARKERS)
+
+        if is_disabled:
+            _add_risk(account_risks, risk_counts, "disabled_users", "Disabled via Enabled=false or ACCOUNTDISABLE.")
+        if _has_uac_flag(uac, "LOCKOUT") or _parse_bool(_first_value(row, header_map, "locked_out")) is True:
+            _add_risk(account_risks, risk_counts, "locked_out", "LockedOut=true or LOCKOUT flag is set.")
+        if _has_uac_flag(uac, "DONT_EXPIRE_PASSWORD") or _parse_bool(_first_value(row, header_map, "password_never_expires")) is True:
+            _add_risk(account_risks, risk_counts, "password_never_expires", "DONT_EXPIRE_PASSWORD or PasswordNeverExpires is set.")
+        if _has_uac_flag(uac, "PASSWD_NOTREQD") or _parse_bool(_first_value(row, header_map, "password_not_required")) is True:
+            _add_risk(account_risks, risk_counts, "password_not_required", "PASSWD_NOTREQD or PasswordNotRequired is set.")
+        if _has_uac_flag(uac, "PASSWD_CANT_CHANGE") or _parse_bool(_first_value(row, header_map, "cannot_change_password")) is True:
+            _add_risk(account_risks, risk_counts, "cannot_change_password", "PASSWD_CANT_CHANGE or CannotChangePassword is set.")
+        if _has_uac_flag(uac, "DONT_REQ_PREAUTH") or _parse_bool(_first_value(row, header_map, "preauth_not_required")) is True:
+            _add_risk(account_risks, risk_counts, "asrep_roastable", "DONT_REQ_PREAUTH or pre-auth-not-required is set.")
+        if _has_uac_flag(uac, "ENCRYPTED_TEXT_PWD_ALLOWED"):
+            _add_risk(account_risks, risk_counts, "reversible_password", "ENCRYPTED_TEXT_PWD_ALLOWED is set.")
+        if _has_uac_flag(uac, "PASSWORD_EXPIRED") or _parse_bool(_first_value(row, header_map, "password_expired")) is True:
+            _add_risk(account_risks, risk_counts, "password_expired", "PASSWORD_EXPIRED or PasswordExpired is set.")
+        if _has_uac_flag(uac, "TRUSTED_FOR_DELEGATION") or _has_uac_flag(uac, "TRUSTED_TO_AUTH_FOR_DELEGATION"):
+            _add_risk(account_risks, risk_counts, "delegation_risk", "Trusted delegation UAC flag is set.")
+
+        spn_value = _first_value(row, header_map, "spn")
+        has_spn = bool(spn_value)
+        if has_spn and is_enabled:
+            _add_risk(account_risks, risk_counts, "spn_kerberoast", "Enabled user account has servicePrincipalName data.")
+
+        enc_raw = _first_value(row, header_map, "enc_types")
+        enc_column_present = any(_normalize_header(alias) in header_map for alias in AD_HEADER_ALIASES["enc_types"])
+        enc_types = _parse_int(enc_raw)
+        has_aes = enc_types is not None and bool(enc_types & (0x08 | 0x10))
+        rc4_only = enc_types in {0x04, 0x06}
+        missing_enc_for_spn = has_spn and enc_column_present and not enc_raw
+        if _has_uac_flag(uac, "USE_DES_KEY_ONLY") or rc4_only or missing_enc_for_spn or (has_spn and enc_types is not None and not has_aes):
+            if _has_uac_flag(uac, "USE_DES_KEY_ONLY"):
+                evidence = "USE_DES_KEY_ONLY is set."
+            elif missing_enc_for_spn:
+                evidence = "Service account has SPN but no msDS-SupportedEncryptionTypes value in the export."
+            else:
+                evidence = "msDS-SupportedEncryptionTypes does not include AES."
+            _add_risk(account_risks, risk_counts, "weak_encryption", evidence)
+
+        if is_privileged:
+            _add_risk(account_risks, risk_counts, "privileged_account", "adminCount=1 or privileged group membership found.")
+            smartcard = _parse_bool(_first_value(row, header_map, "smartcard_required"))
+            if not _has_uac_flag(uac, "SMARTCARD_REQUIRED") and smartcard is not True:
+                _add_risk(account_risks, risk_counts, "smartcard_missing", "Privileged account lacks a smart-card-required indicator.")
+
+        last_logon = _parse_ad_datetime(_first_value(row, header_map, "last_logon"))
+        created = _parse_ad_datetime(_first_value(row, header_map, "created"))
+        logon_reference = last_logon or created
+        if is_enabled and logon_reference and (now - logon_reference).days >= inactive_days:
+            _add_risk(account_risks, risk_counts, "inactive_users", f"No recent logon indicator for {(now - logon_reference).days} days.")
+
+        pwd_last_set = _parse_ad_datetime(_first_value(row, header_map, "pwd_last_set"))
+        if is_enabled and pwd_last_set and (now - pwd_last_set).days >= stale_password_days:
+            _add_risk(account_risks, risk_counts, "stale_password", f"Password age is {(now - pwd_last_set).days} days.")
+        elif is_enabled and _first_value(row, header_map, "pwd_last_set") == "0":
+            _add_risk(account_risks, risk_counts, "password_expired", "pwdLastSet=0 indicates change password at next logon.")
+
+        highest_severity = "none"
+        if account_risks:
+            severity_order = ["critical", "high", "medium", "low", "info"]
+            highest_severity = min((risk["severity"] for risk in account_risks), key=severity_order.index)
+            severity_counts[highest_severity] += 1
+
+        analyzed_accounts.append({
+            "row": index,
+            "name": display_name,
+            "sam": sam,
+            "upn": upn,
+            "enabled": is_enabled,
+            "uac": uac,
+            "risk_count": len(account_risks),
+            "highest_severity": highest_severity,
+            "risks": account_risks,
+        })
+
+    risky_accounts = [account for account in analyzed_accounts if account["risk_count"] > 0]
+    risky_accounts.sort(key=lambda item: (
+        {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4, "none": 5}[item["highest_severity"]],
+        -item["risk_count"],
+        item["name"].lower()
+    ))
+
+    total_risk_instances = sum(risk_counts.values())
+    return {
+        "summary": {
+            "total_accounts": len(rows),
+            "risky_accounts": len(risky_accounts),
+            "total_risk_instances": total_risk_instances,
+            "critical_accounts": severity_counts["critical"],
+            "high_accounts": severity_counts["high"],
+            "medium_accounts": severity_counts["medium"],
+            "low_accounts": severity_counts["low"],
+            "info_accounts": severity_counts["info"],
+            "inactive_days": inactive_days,
+            "stale_password_days": stale_password_days,
+        },
+        "headers": headers,
+        "detected_attributes": {
+            logical: header_map[_normalize_header(alias)]
+            for logical, aliases in AD_HEADER_ALIASES.items()
+            for alias in aliases
+            if _normalize_header(alias) in header_map
+        },
+        "risk_definitions": AD_RISK_DEFINITIONS,
+        "risk_counts": risk_counts,
+        "accounts": risky_accounts[:500],
+    }
 
 @app.route('/')
 def dashboard():
@@ -537,6 +868,56 @@ def net_tools():
 @app.route('/small-apps/api-tester')
 def api_tester():
     return render_template('api_tester.html')
+
+@app.route('/small-apps/ad-risk-scanner')
+def ad_risk_scanner():
+    return render_template('ad_risk_scanner.html')
+
+@app.route('/api/ad-risk/analyze', methods=['POST'])
+def analyze_ad_risk():
+    if 'file' not in request.files:
+        return jsonify({"error": "No CSV file uploaded"}), 400
+
+    file = request.files['file']
+    if not file or file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    if not file.filename.lower().endswith('.csv'):
+        return jsonify({"error": "Only CSV files are supported"}), 400
+
+    try:
+        inactive_days = int(request.form.get('inactive_days', 90))
+        stale_password_days = int(request.form.get('stale_password_days', 180))
+        inactive_days = min(max(inactive_days, 1), 3650)
+        stale_password_days = min(max(stale_password_days, 1), 3650)
+    except ValueError:
+        return jsonify({"error": "Threshold values must be numbers"}), 400
+
+    raw = file.stream.read()
+    if len(raw) > 12 * 1024 * 1024:
+        return jsonify({"error": "CSV file is too large. Please upload a file under 12 MB."}), 400
+
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("latin-1")
+
+    try:
+        sample = text[:4096]
+        dialect = csv.Sniffer().sniff(sample) if sample.strip() else csv.excel
+    except csv.Error:
+        dialect = csv.excel
+
+    stream = io.StringIO(text, newline=None)
+    reader = csv.DictReader(stream, dialect=dialect)
+    if not reader.fieldnames:
+        return jsonify({"error": "CSV must include a header row"}), 400
+
+    rows = [row for row in reader if any((value or "").strip() for value in row.values())]
+    if not rows:
+        return jsonify({"error": "CSV did not contain any account rows"}), 400
+
+    result = _analyze_ad_rows(rows, reader.fieldnames, inactive_days, stale_password_days)
+    return jsonify(result)
 
 @app.route('/api/net/check', methods=['POST'])
 def check_connectivity():
