@@ -119,6 +119,11 @@ AD_RISK_DEFINITIONS = {
         "severity": "critical",
         "description": "Accounts allowing encrypted text passwords.",
     },
+    "critical_system_object": {
+        "title": "Critical System Object",
+        "severity": "high",
+        "description": "Accounts marked as critical AD system objects.",
+    },
     "privileged_account": {
         "title": "Privileged Account",
         "severity": "high",
@@ -162,11 +167,14 @@ AD_HEADER_ALIASES = {
     "admin_count": ["admincount"],
     "member_of": ["memberof", "groups", "memberofgroups"],
     "delegation": ["trustedfordelegation", "trustedtoauthfordelegation", "accountnotdelegated"],
+    "rbcd_delegation": ["principalsallowedtodelegatetoaccount", "msds-allowedtoactonbehalfofotheridentity", "msdsallowedtoactonbehalfofotheridentity"],
     "enc_types": ["msds-supportedencryptiontypes", "msdssupportedencryptiontypes", "supportedencryptiontypes"],
     "created": ["whencreated", "created", "creationdate"],
     "locked_out": ["lockedout", "islockedout"],
     "password_expired": ["passwordexpired", "pwdexpired"],
     "smartcard_required": ["smartcardlogonrequired", "smartcardrequired"],
+    "reversible_password_setting": ["allowreversiblepasswordencryption", "reversiblepasswordencryptionenabled", "reversiblepassword"],
+    "critical_system_object": ["iscriticalsystemobject", "criticalsystemobject"],
 }
 
 PRIVILEGED_GROUP_MARKERS = [
@@ -191,9 +199,9 @@ def _parse_bool(value):
     if value is None:
         return None
     text = str(value).strip().lower()
-    if text in {"true", "yes", "y", "1", "enabled", "enable", "on"}:
+    if text in {"true", "$true", "yes", "y", "1", "enabled", "enable", "on"}:
         return True
-    if text in {"false", "no", "n", "0", "disabled", "disable", "off"}:
+    if text in {"false", "$false", "no", "n", "0", "disabled", "disable", "off"}:
         return False
     return None
 
@@ -209,6 +217,43 @@ def _parse_int(value):
         return int(float(text))
     except (TypeError, ValueError):
         return None
+
+def _parse_multi_value(value):
+    if value is None:
+        return []
+    text = str(value).strip()
+    if not text:
+        return []
+
+    placeholder_values = {
+        "microsoft.activedirectory.management.adpropertyvaluecollection",
+        "system.string[]",
+        "system.object[]",
+        "default",
+        "error",
+        "none",
+        "null",
+        "n/a",
+        "na",
+        "-",
+        "[]",
+        "{}",
+    }
+    if text.strip().lower() in placeholder_values:
+        return []
+
+    text = text.strip("{}[]")
+    parts = re.split(r"[\r\n;|]+|,\s+(?=[^/,\s]+/)", text)
+    values = []
+    for part in parts:
+        clean = part.strip().strip('"').strip("'")
+        if clean and clean.lower() not in placeholder_values:
+            values.append(clean)
+    return values
+
+def _parse_spn_values(value):
+    spn_pattern = re.compile(r"^[a-z][a-z0-9.+-]*/[^\s,;{}]+$", re.IGNORECASE)
+    return [item for item in _parse_multi_value(value) if spn_pattern.match(item)]
 
 def _parse_ad_datetime(value):
     if value is None:
@@ -284,17 +329,22 @@ def _analyze_ad_rows(rows, headers, inactive_days=90, stale_password_days=180):
             _add_risk(account_risks, risk_counts, "cannot_change_password", "PASSWD_CANT_CHANGE or CannotChangePassword is set.")
         if _has_uac_flag(uac, "DONT_REQ_PREAUTH") or _parse_bool(_first_value(row, header_map, "preauth_not_required")) is True:
             _add_risk(account_risks, risk_counts, "asrep_roastable", "DONT_REQ_PREAUTH or pre-auth-not-required is set.")
-        if _has_uac_flag(uac, "ENCRYPTED_TEXT_PWD_ALLOWED"):
-            _add_risk(account_risks, risk_counts, "reversible_password", "ENCRYPTED_TEXT_PWD_ALLOWED is set.")
+        reversible_password_setting = _parse_bool(_first_value(row, header_map, "reversible_password_setting"))
+        if _has_uac_flag(uac, "ENCRYPTED_TEXT_PWD_ALLOWED") or reversible_password_setting is True:
+            _add_risk(account_risks, risk_counts, "reversible_password", "ENCRYPTED_TEXT_PWD_ALLOWED or AllowReversiblePasswordEncryption is set.")
         if _has_uac_flag(uac, "PASSWORD_EXPIRED") or _parse_bool(_first_value(row, header_map, "password_expired")) is True:
             _add_risk(account_risks, risk_counts, "password_expired", "PASSWORD_EXPIRED or PasswordExpired is set.")
         if _has_uac_flag(uac, "TRUSTED_FOR_DELEGATION") or _has_uac_flag(uac, "TRUSTED_TO_AUTH_FOR_DELEGATION"):
             _add_risk(account_risks, risk_counts, "delegation_risk", "Trusted delegation UAC flag is set.")
+        rbcd_principals = _parse_multi_value(_first_value(row, header_map, "rbcd_delegation"))
+        if rbcd_principals:
+            _add_risk(account_risks, risk_counts, "delegation_risk", f"PrincipalsAllowedToDelegateToAccount contains {', '.join(rbcd_principals[:3])}.")
 
         spn_value = _first_value(row, header_map, "spn")
-        has_spn = bool(spn_value)
+        spn_values = _parse_spn_values(spn_value)
+        has_spn = bool(spn_values)
         if has_spn and is_enabled:
-            _add_risk(account_risks, risk_counts, "spn_kerberoast", "Enabled user account has servicePrincipalName data.")
+            _add_risk(account_risks, risk_counts, "spn_kerberoast", f"SPN present: {', '.join(spn_values[:3])}.")
 
         enc_raw = _first_value(row, header_map, "enc_types")
         enc_column_present = any(_normalize_header(alias) in header_map for alias in AD_HEADER_ALIASES["enc_types"])
@@ -316,6 +366,9 @@ def _analyze_ad_rows(rows, headers, inactive_days=90, stale_password_days=180):
             smartcard = _parse_bool(_first_value(row, header_map, "smartcard_required"))
             if not _has_uac_flag(uac, "SMARTCARD_REQUIRED") and smartcard is not True:
                 _add_risk(account_risks, risk_counts, "smartcard_missing", "Privileged account lacks a smart-card-required indicator.")
+
+        if _parse_bool(_first_value(row, header_map, "critical_system_object")) is True:
+            _add_risk(account_risks, risk_counts, "critical_system_object", "isCriticalSystemObject is true.")
 
         last_logon = _parse_ad_datetime(_first_value(row, header_map, "last_logon"))
         created = _parse_ad_datetime(_first_value(row, header_map, "created"))
@@ -342,6 +395,8 @@ def _analyze_ad_rows(rows, headers, inactive_days=90, stale_password_days=180):
             "upn": upn,
             "enabled": is_enabled,
             "uac": uac,
+            "spns": spn_values,
+            "principals_allowed_to_delegate": rbcd_principals,
             "risk_count": len(account_risks),
             "highest_severity": highest_severity,
             "risks": account_risks,
