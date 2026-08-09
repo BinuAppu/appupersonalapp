@@ -112,6 +112,24 @@
             </section>
         </div>
     </section>
+
+    <div id="riskModal" class="ad-modal-backdrop" hidden onclick="handleModalBackdrop(event)">
+        <section class="ad-modal" role="dialog" aria-modal="true" aria-labelledby="riskModalTitle">
+            <div class="ad-modal-header">
+                <div>
+                    <span id="riskModalSeverity" class="severity-pill info">info</span>
+                    <h2 id="riskModalTitle">Finding</h2>
+                    <p id="riskModalDescription"></p>
+                </div>
+                <button type="button" class="ad-icon-btn" aria-label="Close finding details" onclick="closeRiskModal()">&times;</button>
+            </div>
+            <div class="ad-modal-meta">
+                <strong id="riskModalCount">0 users</strong>
+                <span id="riskModalHint">Accounts with this finding</span>
+            </div>
+            <div id="riskModalAccounts" class="ad-modal-account-list"></div>
+        </section>
+    </div>
 </div>
 
 <style>
@@ -352,6 +370,27 @@
         border-radius: 8px;
         padding: 0.85rem;
         min-height: 100px;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+        font: inherit;
+        color: inherit;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .ad-risk-card:hover,
+    .ad-risk-card:focus-visible {
+        border-color: var(--primary-color);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+        outline: none;
+        transform: translateY(-1px);
+    }
+
+    .ad-risk-card:disabled {
+        cursor: default;
+        opacity: 0.66;
+        transform: none;
+        box-shadow: none;
     }
 
     .ad-risk-card.critical { border-left-color: var(--danger-color); }
@@ -471,6 +510,116 @@
         margin-top: 0.2rem;
     }
 
+    .ad-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: rgba(18, 24, 38, 0.56);
+        backdrop-filter: blur(6px);
+        display: grid;
+        place-items: center;
+        padding: 1rem;
+    }
+
+    .ad-modal-backdrop[hidden] {
+        display: none;
+    }
+
+    .ad-modal {
+        width: min(920px, 100%);
+        max-height: min(760px, 92vh);
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .ad-modal-header {
+        padding: 1.1rem 1.2rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        background: var(--bg-color);
+    }
+
+    .ad-modal-header h2 {
+        margin: 0.55rem 0 0.25rem;
+        font-size: 1.35rem;
+    }
+
+    .ad-modal-header p {
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    .ad-icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        background: var(--card-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        font-size: 1.55rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .ad-modal-meta {
+        padding: 0.85rem 1.2rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .ad-modal-meta span {
+        color: var(--text-muted);
+        font-size: 0.88rem;
+    }
+
+    .ad-modal-account-list {
+        padding: 0.75rem;
+        overflow: auto;
+    }
+
+    .ad-modal-account {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.85rem;
+        display: grid;
+        grid-template-columns: minmax(180px, 0.9fr) minmax(260px, 1.4fr);
+        gap: 0.85rem;
+        align-items: start;
+        background: var(--bg-color);
+        margin-bottom: 0.65rem;
+    }
+
+    .ad-modal-account:last-child {
+        margin-bottom: 0;
+    }
+
+    .ad-modal-account .account-name small {
+        overflow-wrap: anywhere;
+    }
+
+    .ad-evidence-list {
+        display: grid;
+        gap: 0.35rem;
+    }
+
+    .ad-evidence {
+        color: var(--text-muted);
+        font-size: 0.84rem;
+        line-height: 1.35;
+    }
+
     @media (max-width: 980px) {
         .ad-upload-band,
         .ad-dashboard,
@@ -489,12 +638,18 @@
         }
 
         .ad-header,
-        .ad-panel-header {
+        .ad-panel-header,
+        .ad-modal-header,
+        .ad-modal-meta {
             align-items: flex-start;
             flex-direction: column;
         }
 
         .ad-thresholds {
+            grid-template-columns: 1fr;
+        }
+
+        .ad-modal-account {
             grid-template-columns: 1fr;
         }
     }
@@ -565,8 +720,11 @@
         riskCards.innerHTML = '';
         Object.entries(adScanData.risk_definitions).forEach(([key, definition]) => {
             const count = adScanData.risk_counts[key] || 0;
-            const card = document.createElement('article');
+            const card = document.createElement('button');
+            card.type = 'button';
             card.className = `ad-risk-card ${definition.severity}`;
+            card.disabled = count === 0;
+            card.onclick = () => openRiskModal(key);
             card.innerHTML = `
                 <h3>${escapeHtml(definition.title)}</h3>
                 <strong>${count}</strong>
@@ -622,6 +780,60 @@
         });
     }
 
+    function openRiskModal(riskKey) {
+        if (!adScanData) return;
+        const definition = adScanData.risk_definitions[riskKey];
+        const accounts = accountsForRisk(riskKey);
+        if (!definition || !accounts.length) return;
+
+        document.getElementById('riskModalTitle').textContent = definition.title;
+        document.getElementById('riskModalDescription').textContent = definition.description;
+        document.getElementById('riskModalCount').textContent = `${accounts.length} ${accounts.length === 1 ? 'user' : 'users'}`;
+        const severityPill = document.getElementById('riskModalSeverity');
+        severityPill.className = `severity-pill ${definition.severity}`;
+        severityPill.textContent = definition.severity;
+
+        const list = document.getElementById('riskModalAccounts');
+        list.innerHTML = accounts.map(account => {
+            const matchingRisks = account.risks.filter(risk => risk.key === riskKey);
+            const evidence = matchingRisks.map(risk => `<span class="ad-evidence">${escapeHtml(risk.evidence)}</span>`).join('');
+            const spns = account.spns && account.spns.length
+                ? `<span class="ad-evidence">SPN: ${escapeHtml(account.spns.join(', '))}</span>`
+                : '';
+            return `
+                <article class="ad-modal-account">
+                    <div class="account-name">
+                        <strong>${escapeHtml(account.name)}</strong>
+                        <small>${escapeHtml(account.sam || account.upn || `CSV row ${account.row}`)}</small>
+                        <small>${account.enabled ? 'Enabled' : 'Disabled'} &middot; CSV row ${account.row}</small>
+                    </div>
+                    <div class="ad-evidence-list">
+                        ${evidence}
+                        ${riskKey === 'spn_kerberoast' ? spns : ''}
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+        document.getElementById('riskModal').hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function accountsForRisk(riskKey) {
+        return (adScanData?.accounts || []).filter(account => account.risks.some(risk => risk.key === riskKey));
+    }
+
+    function closeRiskModal() {
+        document.getElementById('riskModal').hidden = true;
+        document.body.style.overflow = '';
+    }
+
+    function handleModalBackdrop(event) {
+        if (event.target.id === 'riskModal') {
+            closeRiskModal();
+        }
+    }
+
     function downloadFindings() {
         if (!adScanData) return;
         const rows = [['Account', 'SAM', 'UPN', 'Enabled', 'Highest Severity', 'Risks', 'Evidence']];
@@ -652,6 +864,7 @@
         document.getElementById('adResults').style.display = 'none';
         document.getElementById('severityFilter').value = 'all';
         document.getElementById('accountSearch').value = '';
+        closeRiskModal();
         setAlert('');
     }
 
@@ -664,5 +877,11 @@
             "'": '&#039;'
         }[char]));
     }
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !document.getElementById('riskModal').hidden) {
+            closeRiskModal();
+        }
+    });
 </script>
 {% endblock %}
