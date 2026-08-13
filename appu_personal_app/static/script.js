@@ -25,6 +25,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Reminder flash bell
+    const reminderFlashLinks = document.querySelectorAll('.reminder-flash-link');
+    const reminderFlash = document.querySelector('.reminder-flash');
+    const reminderFlashItems = document.querySelectorAll('.reminder-flash-item');
+    let reminderFlashIndex = 0;
+    let reminderFlashPaused = false;
+
+    function focusReminderFindings() {
+        const reminderSection = document.getElementById('reminders');
+        if (!reminderSection) return false;
+
+        reminderSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        reminderSection.classList.remove('reminder-scroll-focus');
+        window.setTimeout(() => reminderSection.classList.add('reminder-scroll-focus'), 250);
+        return true;
+    }
+
+    if (reminderFlashLinks.length) {
+        reminderFlashLinks.forEach(link => {
+            link.addEventListener('click', (event) => {
+                if (window.location.pathname === '/' && focusReminderFindings()) {
+                    event.preventDefault();
+                    history.replaceState(null, '', '#reminders');
+                }
+            });
+        });
+    }
+
+    if (reminderFlash && reminderFlashItems.length > 1) {
+        reminderFlash.addEventListener('mouseenter', () => { reminderFlashPaused = true; });
+        reminderFlash.addEventListener('mouseleave', () => { reminderFlashPaused = false; });
+
+        window.setInterval(() => {
+            if (reminderFlashPaused) return;
+
+            reminderFlashItems[reminderFlashIndex].classList.remove('active');
+            reminderFlashIndex = (reminderFlashIndex + 1) % reminderFlashItems.length;
+            reminderFlashItems[reminderFlashIndex].classList.add('active');
+        }, 3200);
+    }
+
+    if (window.location.hash === '#reminders') {
+        window.setTimeout(focusReminderFindings, 150);
+    }
+
     // Theme Logic
     window.setTheme = function (theme) {
         document.documentElement.setAttribute('data-theme', theme);
