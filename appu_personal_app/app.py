@@ -52,6 +52,38 @@ def days_until_filter(date_str):
     except:
         return 999
 
+def _reminder_alert_color(reminder, colors):
+    days_until = days_until_filter(reminder.get("display_date") or reminder.get("date"))
+    if days_until < 0:
+        return colors.get("overdue", "#8B0000")
+    if days_until <= 7:
+        return colors.get("nearing_1_week", "#E53935")
+    if days_until <= 14:
+        return colors.get("nearing_2_weeks", "#F4C430")
+    return ""
+
+@app.context_processor
+def inject_reminder_flash():
+    settings = data_manager.get_settings()
+    colors = settings.get("colors", {})
+    reminders = data_manager.get_upcoming_reminders(weeks=12)
+    flash_items = []
+
+    for reminder in reminders[:5]:
+        item = reminder.copy()
+        item["alert_color"] = _reminder_alert_color(item, colors)
+        item["days_until"] = days_until_filter(item.get("display_date") or item.get("date"))
+        flash_items.append(item)
+
+    urgent_count = len([item for item in reminders if _reminder_alert_color(item, colors)])
+    bell_color = flash_items[0]["alert_color"] if flash_items and flash_items[0]["alert_color"] else colors.get("nearing_2_weeks", "#F4C430")
+
+    return {
+        "reminder_flash_items": flash_items,
+        "reminder_flash_count": urgent_count or len(flash_items),
+        "reminder_flash_color": bell_color
+    }
+
 AD_UAC_FLAGS = {
     "ACCOUNTDISABLE": 0x0002,
     "LOCKOUT": 0x0010,
