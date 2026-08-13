@@ -29,6 +29,37 @@
             <a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">⚙️ Settings</a>
         </nav>
 
+        <a class="reminder-flash reminder-flash-link" href="/#reminders"
+            aria-label="Scroll to recent reminders"
+            style="--reminder-flash-color: {{ reminder_flash_color }};">
+            <span class="reminder-flash-bell">
+                <svg class="reminder-flash-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13.7 21a2 2 0 01-3.4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                {% if reminder_flash_count %}
+                <span class="reminder-flash-count">{{ reminder_flash_count }}</span>
+                {% endif %}
+            </span>
+            <span class="reminder-flash-track">
+                {% if reminder_flash_items %}
+                <span class="reminder-flash-flipper">
+                    {% for rem in reminder_flash_items %}
+                    <span class="reminder-flash-item{% if loop.first %} active{% endif %}" {% if rem.alert_color %}style="--item-color: {{ rem.alert_color }};"{% endif %}>
+                        <span class="reminder-flash-title">{{ rem.title }}</span>
+                        <span class="reminder-flash-meta">
+                            {{ rem.display_date|default(rem.date) }} ·
+                            {% if rem.days_until == 0 %}today{% elif rem.days_until == 1 %}tomorrow{% else %}{{ rem.days_until }} days{% endif %}
+                        </span>
+                    </span>
+                    {% endfor %}
+                </span>
+                {% else %}
+                <span class="reminder-flash-empty">No upcoming reminders</span>
+                {% endif %}
+            </span>
+        </a>
+
         <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
             <span></span><span></span><span></span>
         </button>
