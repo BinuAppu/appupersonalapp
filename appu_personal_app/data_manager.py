@@ -54,7 +54,8 @@ class DataManager:
                     "overdue": "#8B0000"           # Dark Red
                 },
                 "section_order": ["tasks", "projects", "reminders"],
-                "task_alert_days": 7
+                "task_alert_days": 7,
+                "background_image_enabled": False
             }
             self.save_settings(default_settings)
             return default_settings
@@ -63,11 +64,14 @@ class DataManager:
                 settings = json.load(f)
                 if "section_order" not in settings:
                     settings["section_order"] = ["tasks", "projects", "reminders"]
+                if "background_image_enabled" not in settings:
+                    settings["background_image_enabled"] = False
                 return settings
         except (json.JSONDecodeError, IOError):
             return {
                 "colors": {"nearing_2_weeks": "#F4C430", "nearing_1_week": "#E53935", "overdue": "#8B0000"},
-                "section_order": ["tasks", "projects", "reminders"]
+                "section_order": ["tasks", "projects", "reminders"],
+                "background_image_enabled": False
             }
 
     def save_settings(self, settings):

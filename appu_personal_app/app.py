@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
 import csv
 import io
 import os
@@ -11,6 +11,15 @@ from data_manager import DataManager
 
 app = Flask(__name__)
 data_manager = DataManager()
+TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+BACKGROUND_FILENAMES = ("background.jpg", "background.png")
+
+def _find_background_image():
+    for filename in BACKGROUND_FILENAMES:
+        path = os.path.join(TEMPLATES_DIR, filename)
+        if os.path.exists(path):
+            return filename
+    return None
 
 @app.template_filter('short_date')
 def short_date_filter(value):
@@ -1235,11 +1244,45 @@ def handle_username():
 @app.route('/api/settings', methods=['GET', 'POST'])
 def handle_settings():
     if request.method == 'POST':
-        data = request.json
+        data = request.json or {}
+        data.pop("background_image_available", None)
         data_manager.save_settings(data)
         return jsonify({"success": True})
     else:
-        return jsonify(data_manager.get_settings())
+        settings = data_manager.get_settings()
+        settings["background_image_available"] = _find_background_image() is not None
+        return jsonify(settings)
+
+@app.route('/background-image')
+def background_image():
+    filename = _find_background_image()
+    if not filename:
+        return jsonify({"error": "Background image not found"}), 404
+    return send_from_directory(TEMPLATES_DIR, filename)
+
+@app.route('/api/settings/background-image', methods=['POST'])
+def upload_background_image():
+    image = request.files.get('background_image')
+    if not image or not image.filename:
+        return jsonify({"success": False, "error": "Image file required"}), 400
+
+    ext = os.path.splitext(image.filename)[1].lower()
+    if ext not in {".jpg", ".jpeg", ".png"}:
+        return jsonify({"success": False, "error": "Only JPG and PNG images are supported"}), 400
+
+    filename = "background.png" if ext == ".png" else "background.jpg"
+    for old_filename in BACKGROUND_FILENAMES:
+        old_path = os.path.join(TEMPLATES_DIR, old_filename)
+        if old_filename != filename and os.path.exists(old_path):
+            os.remove(old_path)
+
+    image.save(os.path.join(TEMPLATES_DIR, filename))
+
+    settings = data_manager.get_settings()
+    settings["background_image_enabled"] = True
+    data_manager.save_settings(settings)
+
+    return jsonify({"success": True, "filename": filename})
 
 @app.route('/api/backup', methods=['POST'])
 def backup_data():
