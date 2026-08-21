@@ -1,0 +1,48 @@
+# Axolotl App - Steps to Install
+
+Welcome to the Axolotl personal dashboard! Follow these steps to perform a fresh installation.
+
+## Prerequisites
+- Python 3.8+
+- pip (Python package installer)
+
+## Installation Steps
+
+1. **Clone or Download the Repository**
+   Ensure all files (including `app.py`, `requirements.txt`, `static/`, and `templates/`) are in your working directory.
+
+2. **Create a Virtual Environment**
+   Open your terminal and run the following command in the project directory:
+   ```bash
+   python3 -m venv venv
+   ```
+
+3. **Activate the Virtual Environment**
+   - On Linux/macOS:
+     ```bash
+     source venv/bin/activate
+     ```
+   - On Windows:
+     ```bash
+     venv\Scripts\activate
+     ```
+
+4. **Install Dependencies**
+   Run the following command to install required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **Start the Application**
+   Run the Flask server:
+   ```bash
+   python3 app.py
+   ```
+
+6. **Access the Dashboard**
+   Open your web browser and navigate to:
+   http://127.0.0.1:8000
+
+## Notes
+- `data.json` and `settings.json` will be automatically generated upon your first visit.
+- Customizations will be saved seamlessly to your local files.

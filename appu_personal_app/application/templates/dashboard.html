@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hero">
+    <div class="page-hero-text">
+        <h1>Good {{ 'morning' if now.hour < 12 else ('afternoon' if now.hour < 17 else 'evening') }}, {{ user_name }} 👋</h1>
+        <p>Manage your tasks, projects, and reminders in one place.</p>
+    </div>
+    <div class="page-hero-actions">
+        <button class="btn" onclick="openCreateModal('task')">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            New Task
+        </button>
+        <button class="btn btn-secondary" onclick="openCreateModal('reminder')">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Reminder
+        </button>
+        <button class="btn btn-accent" onclick="openKBModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4.5a3.5 3.5 0 00-6.5 1.8v.2A3 3 0 004 12a3 3 0 001.5 5.5A3.5 3.5 0 0012 19.5m0-15a3.5 3.5 0 016.5 1.8v.2A3 3 0 0120 12a3 3 0 01-1.5 5.5A3.5 3.5 0 0112 19.5m0-15v15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Knowledge
+        </button>
+        <button class="btn btn-purple" onclick="openCreateProjectModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Project
+        </button>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    {% for section_id in settings.section_order %}
+    {% if section_id == 'tasks' %}
+    <!-- Active Tasks Section -->
+    <div class="section-container" data-section="tasks">
+        <div class="section-header">
+            <h3 class="section-title">✅ Active Tasks</h3>
+            <div class="section-count-badges">
+                <span class="count-badge count-active">{{ counts.tasks_active }} active</span>
+                <span class="count-badge count-done">{{ counts.tasks_done }} done</span>
+            </div>
+        </div>
+        <div class="task-list" data-sortable="tasks">
+            {% if active_tasks %}
+            {% set alert_days = settings.task_alert_days if settings.task_alert_days is defined else 7 %}
+            {% for task in active_tasks %}
+            {% set needs_alert = (not task.comments) or (task.comments[-1].timestamp|days_since >= alert_days) %}
+            <div class="item-card{% if needs_alert %} task-alert-border{% endif %}" draggable="true"
+                data-item-id="{{ task.id }}" data-item-type="task"
+                onclick="viewComments('task', '{{ task.id }}', '{{ task.title }}')"
+                {% if needs_alert %}title="No comment activity in {{ alert_days }}+ days"{% endif %}>
+                <div class="item-card-header">
+                    <div style="flex: 1; min-width: 0;">
+                        <h4 class="item-card-title">{{ task.title }}</h4>
+                        <div class="item-card-meta">
+                            <span class="status-badge status-{{ task.status.lower().replace(' ', '') }}">{{ task.status }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% if task.comments %}
+                <div class="latest-comment-preview">
+                    {{ task.comments[-1].timestamp|short_date }} · "{{ task.comments[-1].text }}"
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty-state">No active tasks. Create one!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% elif section_id == 'projects' %}
+    <!-- Projects Section -->
+    <div class="section-container" data-section="projects">
+        <div class="section-header">
+            <h3 class="section-title">📁 Projects</h3>
+            <div class="section-count-badges">
+                <span class="count-badge count-active">{{ counts.projects_active }} active</span>
+                <span class="count-badge count-done">{{ counts.projects_done }} done</span>
+            </div>
+        </div>
+        <div class="project-list" data-sortable="projects">
+            {% if projects %}
+            {% for project in projects %}
+            {% set proj_days = project.end_date|days_until %}
+            {% set proj_bg = "" %}
+            {% if project.status != 'Completed' %}
+                {% if proj_days < 0 %}{% set proj_bg = settings.colors.overdue %}
+                {% elif proj_days <= 7 %}{% set proj_bg = settings.colors.nearing_1_week %}
+                {% elif proj_days <= 14 %}{% set proj_bg = settings.colors.nearing_2_weeks %}
+                {% endif %}
+            {% endif %}
+            <div class="item-card project-card" draggable="true" data-item-id="{{ project.id }}"
+                data-item-type="project" onclick="window.location.href='/project/{{ project.id }}'"
+                {% if proj_bg %}style="background-color: {{ proj_bg }}; border-left-color: transparent;"{% endif %}>
+                <div class="item-card-header">
+                    <div style="flex: 1; min-width: 0;">
+                        <h4 class="item-card-title" {% if proj_bg %}style="color: white;"{% endif %}>{{ project.name }}</h4>
+                        <div class="item-card-meta" {% if proj_bg %}style="color: rgba(255,255,255,0.85);"{% endif %}>
+                            <span class="status-badge status-{{ project.status.lower().replace(' ', '-') }}">{{ project.status }}</span>
+                            <span style="margin-left: 6px;">{{ project.end_date }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% if project.description %}
+                <div class="latest-comment-preview" {% if proj_bg %}style="color: rgba(255,255,255,0.9); border-top-color: rgba(255,255,255,0.25);"{% endif %}>
+                    {{ project.description }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty-state">No active projects.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% elif section_id == 'reminders' %}
+    <!-- Reminders Section -->
+    <div class="section-container" id="reminders" data-section="reminders">
+        <div class="section-header">
+            <h3 class="section-title">🔔 Reminders</h3>
+            <div class="section-count-badges">
+                <span class="count-badge count-active">{{ counts.reminders_upcoming }} upcoming</span>
+                <span class="count-badge count-done">{{ counts.reminders_total }} total</span>
+            </div>
+        </div>
+        <div class="reminder-list" data-sortable="reminders">
+            {% if upcoming_reminders %}
+            {% for rem in upcoming_reminders %}
+            {% set rem_date = rem.display_date|default(rem.date) %}
+            {% set days_until = rem_date|days_until %}
+            {% set rem_bg = "" %}
+            {% if days_until < 0 %}{% set rem_bg = settings.colors.overdue %}
+            {% elif days_until <= 7 %}{% set rem_bg = settings.colors.nearing_1_week %}
+            {% elif days_until <= 14 %}{% set rem_bg = settings.colors.nearing_2_weeks %}
+            {% endif %}
+            <div class="item-card recur-{{ rem.recurrence.lower() }}" draggable="true"
+                data-item-id="{{ rem.id }}" data-item-type="reminder"
+                onclick="viewComments('reminder', '{{ rem.id }}', '{{ rem.title|replace('\'', '\\\'') }}')"
+                {% if rem_bg %}style="background-color: {{ rem_bg }}; border-left-color: transparent;"{% endif %}>
+                <div class="item-card-header">
+                    <div style="flex: 1; min-width: 0;">
+                        <h4 class="item-card-title" {% if rem_bg %}style="color: white;"{% endif %}>{{ rem.title }}</h4>
+                        <div class="item-card-meta" {% if rem_bg %}style="color: rgba(255,255,255,0.85);"{% endif %}>
+                            {{ rem.display_date }} · {{ rem.recurrence }}
+                        </div>
+                    </div>
+                </div>
+                {% if rem.comments %}
+                <div class="latest-comment-preview" {% if rem_bg %}style="color: rgba(255,255,255,0.9); border-top-color: rgba(255,255,255,0.25);"{% endif %}>
+                    {{ rem.comments[-1].timestamp|short_date }} · "{{ rem.comments[-1].text }}"
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty-state">No upcoming reminders.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+{% endblock %}

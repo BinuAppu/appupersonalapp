@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-hero">
+    <div class="page-hero-text">
+        <h1>{{ project.name }}</h1>
+        <p>{{ project.description }}</p>
+        <div style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
+            <span class="status-badge status-{{ project.status.lower().replace(' ', '') }}">{{ project.status }}</span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">{{ project.start_date }} – {{ project.end_date }}</span>
+        </div>
+    </div>
+    <div class="page-hero-actions">
+        <button class="btn" onclick="openEditProjectModal('{{ project.id }}', '{{ project.name|replace("'", "\\'") }}', '{{ project.description|replace("'", "\\'") }}', '{{ project.start_date }}', '{{ project.end_date }}', '{{ project.status }}')">✏️ Edit</button>
+        <button class="btn btn-secondary" onclick="openCreateProjectTaskModal('{{ project.id }}')">➕ New Task</button>
+    </div>
+</div>
+
+<div class="project-tasks-container">
+    <div class="section-header">
+        <h3>📋 Tasks</h3>
+    </div>
+    <div id="tasksTree" class="tasks-tree">
+        {% if project.tasks %}
+        <div class="tasks-table-head">
+            <span class="tc-expand"></span>
+            <span class="tc-name">Task</span>
+            <span class="tc-status">Status</span>
+            <span class="tc-dates">Dates</span>
+            <span class="tc-comments">Notes</span>
+            <span class="tc-actions">Actions</span>
+        </div>
+        {% for task in project.tasks %}
+        {% set project = project %}
+        <div class="task-item" data-task-id="{{ task.id }}">
+            <div class="task-item-header">
+                <span class="tc-expand">
+                    <span class="task-toggle" onclick="toggleTask(this)" data-expanded="false">▶</span>
+                </span>
+                <span class="tc-name task-item-title">{{ task.name }}</span>
+                <span class="tc-status">
+                    <span class="status-badge status-{{ task.status.lower().replace(' ', '') }}">{{ task.status }}</span>
+                </span>
+                <span class="tc-dates">{{ task.start_date }} – {{ task.end_date }}</span>
+                <span class="tc-comments">
+                    💬 {{ task.task_comments|length if task.task_comments else 0 }}
+                    {% if task.task_comments and task.task_comments|length > 0 %}
+                    <span class="tc-last-comment" title="{{ task.task_comments[-1].text }}">· {{ task.task_comments[-1].text[:40] }}{% if task.task_comments[-1].text|length > 40 %}…{% endif %}</span>
+                    {% endif %}
+                </span>
+                <span class="tc-actions task-item-actions">
+                    <button class="task-action-btn" onclick="event.stopPropagation(); openEditProjectTaskModal('{{ project.id }}', '{{ task.id }}', '{{ task.name|replace("'", "\\'") }}', '{{ task.comments|replace("'", "\\'") }}', '{{ task.start_date }}', '{{ task.end_date }}', '{{ task.status }}', '{{ task.start_date }}', '{{ task.end_date }}')" title="Edit Task">✏️</button>
+                    <button class="task-action-btn" onclick="event.stopPropagation(); openCreateSubtaskModal('{{ project.id }}', '{{ task.id }}')" title="Add Subtask">➕</button>
+                    <button class="task-action-btn" onclick="event.stopPropagation(); viewProjectTaskComments('{{ project.id }}', '{{ task.id }}', '{{ task.name|replace("'", "\\'") }}')" title="View Comments">💬</button>
+                    <button class="task-action-btn delete-btn" data-type="project-tasks" data-project-id="{{ project.id }}" data-task-id="{{ task.id }}" title="Delete Task">🗑️</button>
+                </span>
+            </div>
+            <div class="task-subtasks" style="display: none;">
+                {% if task.subtasks %}
+                {% for subtask in task.subtasks %}
+                {% set project = project %}
+                {% set parent_start_date = task.start_date %}
+                {% set parent_end_date = task.end_date %}
+                {% include 'subtask_item.html' %}
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="text-align:center; color: var(--text-muted); padding: 20px;">No tasks yet. Create your first task!</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Store project data for JavaScript
+    window.currentProject = {{ project|tojson }};
+    window.projectStartDate = '{{ project.start_date }}';
+    window.projectEndDate = '{{ project.end_date }}';
+</script>
+{% endblock %}
