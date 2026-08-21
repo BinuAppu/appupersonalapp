@@ -1,0 +1,887 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="ad-risk-page">
+    <div class="back-link">
+        <a href="/small-apps">← Back to Small Apps</a>
+    </div>
+
+    <section class="ad-shell">
+        <div class="ad-header">
+            <div>
+                <div class="tool-kicker">Offline CSV analyzer</div>
+                <h1>AD Risk Scanner</h1>
+                <p>Upload an Active Directory user export and review account risks without sending data outside this app.</p>
+            </div>
+            <button type="button" class="ad-secondary-btn" onclick="resetScanner()">Reset</button>
+        </div>
+
+        <div class="ad-upload-band">
+            <label class="ad-file-drop" for="adCsvFile">
+                <span class="ad-file-icon">CSV</span>
+                <span>
+                    <strong id="fileName">Choose AD user CSV</strong>
+                    <small>Supports common AD, PowerShell, and LDAP export headers.</small>
+                </span>
+                <input type="file" id="adCsvFile" accept=".csv,text/csv" onchange="showSelectedFile()">
+            </label>
+
+            <div class="ad-thresholds">
+                <label>
+                    <span>Inactive days</span>
+                    <input type="number" id="inactiveDays" min="1" max="3650" value="90">
+                </label>
+                <label>
+                    <span>Stale password days</span>
+                    <input type="number" id="stalePasswordDays" min="1" max="3650" value="180">
+                </label>
+            </div>
+
+            <button type="button" class="ad-primary-btn" onclick="analyzeCsv()">Analyze</button>
+        </div>
+
+        <div id="adAlert" class="ad-alert" style="display:none;"></div>
+
+        <div id="adResults" style="display:none;">
+            <div class="ad-summary-grid">
+                <div class="ad-summary-card critical">
+                    <span>Critical</span>
+                    <strong id="criticalCount">0</strong>
+                </div>
+                <div class="ad-summary-card high">
+                    <span>High</span>
+                    <strong id="highCount">0</strong>
+                </div>
+                <div class="ad-summary-card medium">
+                    <span>Medium</span>
+                    <strong id="mediumCount">0</strong>
+                </div>
+                <div class="ad-summary-card total">
+                    <span>Risky / Total</span>
+                    <strong id="riskyTotal">0 / 0</strong>
+                </div>
+            </div>
+
+            <div class="ad-dashboard">
+                <section class="ad-panel">
+                    <div class="ad-panel-header">
+                        <span>Risk Dashboard</span>
+                        <span id="riskInstanceCount">0 findings</span>
+                    </div>
+                    <div id="riskCards" class="ad-risk-grid"></div>
+                </section>
+
+                <section class="ad-panel">
+                    <div class="ad-panel-header">
+                        <span>Detected Attributes</span>
+                        <span id="attributeCount">0</span>
+                    </div>
+                    <div id="attributeChips" class="ad-chip-list"></div>
+                </section>
+            </div>
+
+            <section class="ad-panel">
+                <div class="ad-panel-header">
+                    <span>Risky Accounts</span>
+                    <div class="ad-table-actions">
+                        <select id="severityFilter" onchange="renderAccounts()">
+                            <option value="all">All severities</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                            <option value="info">Info</option>
+                        </select>
+                        <input type="search" id="accountSearch" placeholder="Search account..." oninput="renderAccounts()">
+                        <button type="button" class="ad-secondary-btn compact" onclick="downloadFindings()">Export CSV</button>
+                    </div>
+                </div>
+                <div class="ad-table-wrap">
+                    <table class="ad-table">
+                        <thead>
+                            <tr>
+                                <th>Account</th>
+                                <th>Status</th>
+                                <th>Severity</th>
+                                <th>Risks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accountsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <div id="riskModal" class="ad-modal-backdrop" hidden onclick="handleModalBackdrop(event)">
+        <section class="ad-modal" role="dialog" aria-modal="true" aria-labelledby="riskModalTitle">
+            <div class="ad-modal-header">
+                <div>
+                    <span id="riskModalSeverity" class="severity-pill info">info</span>
+                    <h2 id="riskModalTitle">Finding</h2>
+                    <p id="riskModalDescription"></p>
+                </div>
+                <button type="button" class="ad-icon-btn" aria-label="Close finding details" onclick="closeRiskModal()">&times;</button>
+            </div>
+            <div class="ad-modal-meta">
+                <strong id="riskModalCount">0 users</strong>
+                <span id="riskModalHint">Accounts with this finding</span>
+            </div>
+            <div id="riskModalAccounts" class="ad-modal-account-list"></div>
+        </section>
+    </div>
+</div>
+
+<style>
+    .ad-risk-page {
+        padding: 2rem;
+        max-width: 1500px;
+        margin: 0 auto;
+    }
+
+    .ad-risk-page .back-link {
+        margin-bottom: 1.25rem;
+    }
+
+    .ad-risk-page .back-link a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .ad-risk-page .back-link a:hover {
+        color: var(--primary-color);
+    }
+
+    .ad-shell {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+    }
+
+    .ad-header {
+        padding: 1.4rem 1.6rem;
+        border-bottom: 1px solid var(--border-color);
+        background: linear-gradient(135deg, rgba(107, 127, 212, 0.12), rgba(91, 191, 176, 0.08));
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .tool-kicker {
+        color: var(--primary-color);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+
+    .ad-header h1 {
+        font-size: 2rem;
+        margin: 0;
+    }
+
+    .ad-header p {
+        margin: 0.35rem 0 0;
+        color: var(--text-muted);
+    }
+
+    .ad-upload-band {
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) auto auto;
+        gap: 1rem;
+        align-items: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .ad-file-drop {
+        min-height: 76px;
+        border: 1px dashed var(--input-border);
+        border-radius: 10px;
+        background: var(--bg-color);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.9rem;
+        cursor: pointer;
+    }
+
+    .ad-file-drop input {
+        display: none;
+    }
+
+    .ad-file-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        background: rgba(91, 191, 176, 0.16);
+        color: var(--accent-color);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+
+    .ad-file-drop strong,
+    .ad-file-drop small {
+        display: block;
+    }
+
+    .ad-file-drop small {
+        color: var(--text-muted);
+        margin-top: 0.2rem;
+    }
+
+    .ad-thresholds {
+        display: grid;
+        grid-template-columns: repeat(2, 150px);
+        gap: 0.75rem;
+    }
+
+    .ad-thresholds label span {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+    }
+
+    .ad-primary-btn,
+    .ad-secondary-btn {
+        border-radius: 999px;
+        border: 1px solid transparent;
+        padding: 0.72rem 1.2rem;
+        font-weight: 800;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .ad-primary-btn {
+        background: var(--primary-color);
+        color: #fff;
+        box-shadow: 0 3px 12px var(--primary-glow);
+    }
+
+    .ad-primary-btn:disabled {
+        opacity: 0.65;
+        cursor: wait;
+    }
+
+    .ad-secondary-btn {
+        background: var(--bg-color);
+        color: var(--text-color);
+        border-color: var(--border-color);
+    }
+
+    .ad-secondary-btn.compact {
+        padding: 0.58rem 0.9rem;
+    }
+
+    .ad-alert {
+        margin: 1rem;
+        border: 1px solid rgba(239, 128, 128, 0.35);
+        background: rgba(239, 128, 128, 0.1);
+        color: var(--danger-color);
+        border-radius: 10px;
+        padding: 0.9rem 1rem;
+        font-weight: 700;
+    }
+
+    .ad-summary-grid {
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .ad-summary-card {
+        border: 1px solid var(--border-color);
+        background: var(--bg-color);
+        border-radius: 10px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 62px;
+    }
+
+    .ad-summary-card span {
+        color: var(--text-muted);
+        font-weight: 800;
+    }
+
+    .ad-summary-card strong {
+        font-size: 1.7rem;
+    }
+
+    .ad-summary-card.critical strong { color: var(--danger-color); }
+    .ad-summary-card.high strong { color: #d97706; }
+    .ad-summary-card.medium strong { color: var(--warning-color); }
+    .ad-summary-card.total strong { color: var(--primary-color); }
+
+    .ad-dashboard {
+        padding: 0 1rem 1rem;
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(260px, 0.85fr);
+        gap: 1rem;
+    }
+
+    .ad-panel {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 0 1rem 1rem;
+    }
+
+    .ad-dashboard .ad-panel {
+        margin: 0;
+    }
+
+    .ad-panel-header {
+        min-height: 44px;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--card-bg);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        font-weight: 900;
+    }
+
+    .ad-risk-grid {
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .ad-risk-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-left: 4px solid var(--text-muted);
+        border-radius: 8px;
+        padding: 0.85rem;
+        min-height: 100px;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+        font: inherit;
+        color: inherit;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .ad-risk-card:hover,
+    .ad-risk-card:focus-visible {
+        border-color: var(--primary-color);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+        outline: none;
+        transform: translateY(-1px);
+    }
+
+    .ad-risk-card:disabled {
+        cursor: default;
+        opacity: 0.66;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .ad-risk-card.critical { border-left-color: var(--danger-color); }
+    .ad-risk-card.high { border-left-color: #d97706; }
+    .ad-risk-card.medium { border-left-color: var(--warning-color); }
+    .ad-risk-card.low { border-left-color: var(--primary-color); }
+    .ad-risk-card.info { border-left-color: var(--accent-color); }
+
+    .ad-risk-card h3 {
+        font-size: 0.95rem;
+        margin: 0 0 0.35rem;
+    }
+
+    .ad-risk-card p {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        line-height: 1.4;
+        margin: 0.45rem 0 0;
+    }
+
+    .ad-risk-card strong {
+        font-size: 1.45rem;
+    }
+
+    .ad-chip-list {
+        padding: 1rem;
+        display: flex;
+        align-content: flex-start;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        max-height: 310px;
+        overflow: auto;
+    }
+
+    .ad-chip,
+    .risk-pill,
+    .severity-pill {
+        border-radius: 999px;
+        padding: 0.28rem 0.58rem;
+        font-size: 0.75rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .ad-chip {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+    }
+
+    .severity-pill.critical { background: rgba(239, 128, 128, 0.16); color: var(--danger-color); }
+    .severity-pill.high { background: rgba(217, 119, 6, 0.14); color: #d97706; }
+    .severity-pill.medium { background: rgba(246, 195, 111, 0.18); color: #a16207; }
+    .severity-pill.low { background: rgba(107, 127, 212, 0.13); color: var(--primary-color); }
+    .severity-pill.info { background: rgba(91, 191, 176, 0.14); color: var(--accent-color); }
+
+    .risk-pill {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        display: inline-block;
+        margin: 0.15rem;
+    }
+
+    .ad-table-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .ad-table-actions select,
+    .ad-table-actions input {
+        width: auto;
+        min-width: 150px;
+        padding: 0.58rem 0.7rem;
+        border-radius: 8px;
+    }
+
+    .ad-table-wrap {
+        overflow: auto;
+        max-height: 560px;
+    }
+
+    .ad-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 820px;
+    }
+
+    .ad-table th,
+    .ad-table td {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .ad-table th {
+        position: sticky;
+        top: 0;
+        background: var(--card-bg);
+        z-index: 1;
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+    }
+
+    .account-name strong,
+    .account-name small {
+        display: block;
+    }
+
+    .account-name small {
+        color: var(--text-muted);
+        margin-top: 0.2rem;
+    }
+
+    .ad-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: rgba(18, 24, 38, 0.56);
+        backdrop-filter: blur(6px);
+        display: grid;
+        place-items: center;
+        padding: 1rem;
+    }
+
+    .ad-modal-backdrop[hidden] {
+        display: none;
+    }
+
+    .ad-modal {
+        width: min(920px, 100%);
+        max-height: min(760px, 92vh);
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .ad-modal-header {
+        padding: 1.1rem 1.2rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        background: var(--bg-color);
+    }
+
+    .ad-modal-header h2 {
+        margin: 0.55rem 0 0.25rem;
+        font-size: 1.35rem;
+    }
+
+    .ad-modal-header p {
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    .ad-icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        background: var(--card-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        font-size: 1.55rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .ad-modal-meta {
+        padding: 0.85rem 1.2rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .ad-modal-meta span {
+        color: var(--text-muted);
+        font-size: 0.88rem;
+    }
+
+    .ad-modal-account-list {
+        padding: 0.75rem;
+        overflow: auto;
+    }
+
+    .ad-modal-account {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.85rem;
+        display: grid;
+        grid-template-columns: minmax(180px, 0.9fr) minmax(260px, 1.4fr);
+        gap: 0.85rem;
+        align-items: start;
+        background: var(--bg-color);
+        margin-bottom: 0.65rem;
+    }
+
+    .ad-modal-account:last-child {
+        margin-bottom: 0;
+    }
+
+    .ad-modal-account .account-name small {
+        overflow-wrap: anywhere;
+    }
+
+    .ad-evidence-list {
+        display: grid;
+        gap: 0.35rem;
+    }
+
+    .ad-evidence {
+        color: var(--text-muted);
+        font-size: 0.84rem;
+        line-height: 1.35;
+    }
+
+    @media (max-width: 980px) {
+        .ad-upload-band,
+        .ad-dashboard,
+        .ad-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ad-thresholds {
+            grid-template-columns: repeat(2, minmax(120px, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .ad-risk-page {
+            padding: 1rem;
+        }
+
+        .ad-header,
+        .ad-panel-header,
+        .ad-modal-header,
+        .ad-modal-meta {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .ad-thresholds {
+            grid-template-columns: 1fr;
+        }
+
+        .ad-modal-account {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    let adScanData = null;
+
+    function showSelectedFile() {
+        const input = document.getElementById('adCsvFile');
+        document.getElementById('fileName').textContent = input.files[0] ? input.files[0].name : 'Choose AD user CSV';
+    }
+
+    function setAlert(message, isError = true) {
+        const alert = document.getElementById('adAlert');
+        alert.textContent = message;
+        alert.style.display = message ? 'block' : 'none';
+        alert.style.borderColor = isError ? 'rgba(239, 128, 128, 0.35)' : 'rgba(91, 191, 176, 0.35)';
+        alert.style.background = isError ? 'rgba(239, 128, 128, 0.1)' : 'rgba(91, 191, 176, 0.12)';
+        alert.style.color = isError ? 'var(--danger-color)' : 'var(--accent-color)';
+    }
+
+    async function analyzeCsv() {
+        const fileInput = document.getElementById('adCsvFile');
+        const analyzeBtn = document.querySelector('.ad-primary-btn');
+        if (!fileInput.files.length) {
+            setAlert('Select a CSV file first.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('inactive_days', document.getElementById('inactiveDays').value || '90');
+        formData.append('stale_password_days', document.getElementById('stalePasswordDays').value || '180');
+
+        setAlert('');
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = 'Analyzing...';
+
+        try {
+            const response = await fetch('/api/ad-risk/analyze', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Unable to analyze CSV.');
+            }
+            adScanData = data;
+            renderDashboard();
+            setAlert(`Analyzed ${data.summary.total_accounts} accounts from ${data.headers.length} CSV columns.`, false);
+        } catch (error) {
+            setAlert(error.message);
+        } finally {
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = 'Analyze';
+        }
+    }
+
+    function renderDashboard() {
+        if (!adScanData) return;
+        const summary = adScanData.summary;
+        document.getElementById('adResults').style.display = 'block';
+        document.getElementById('criticalCount').textContent = summary.critical_accounts;
+        document.getElementById('highCount').textContent = summary.high_accounts;
+        document.getElementById('mediumCount').textContent = summary.medium_accounts;
+        document.getElementById('riskyTotal').textContent = `${summary.risky_accounts} / ${summary.total_accounts}`;
+        document.getElementById('riskInstanceCount').textContent = `${summary.total_risk_instances} findings`;
+
+        const riskCards = document.getElementById('riskCards');
+        riskCards.innerHTML = '';
+        Object.entries(adScanData.risk_definitions).forEach(([key, definition]) => {
+            const count = adScanData.risk_counts[key] || 0;
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = `ad-risk-card ${definition.severity}`;
+            card.disabled = count === 0;
+            card.onclick = () => openRiskModal(key);
+            card.innerHTML = `
+                <h3>${escapeHtml(definition.title)}</h3>
+                <strong>${count}</strong>
+                <p>${escapeHtml(definition.description)}</p>
+            `;
+            riskCards.appendChild(card);
+        });
+
+        const detected = Object.entries(adScanData.detected_attributes);
+        document.getElementById('attributeCount').textContent = detected.length;
+        const chips = document.getElementById('attributeChips');
+        chips.innerHTML = detected.length ? '' : '<span class="ad-chip">No known AD attributes detected</span>';
+        detected.forEach(([logical, column]) => {
+            const chip = document.createElement('span');
+            chip.className = 'ad-chip';
+            chip.textContent = `${logical}: ${column}`;
+            chips.appendChild(chip);
+        });
+
+        renderAccounts();
+    }
+
+    function renderAccounts() {
+        if (!adScanData) return;
+        const severity = document.getElementById('severityFilter').value;
+        const query = document.getElementById('accountSearch').value.trim().toLowerCase();
+        const tbody = document.getElementById('accountsBody');
+        const accounts = adScanData.accounts.filter(account => {
+            const matchesSeverity = severity === 'all' || account.highest_severity === severity;
+            const text = `${account.name} ${account.sam || ''} ${account.upn || ''}`.toLowerCase();
+            return matchesSeverity && (!query || text.includes(query));
+        });
+
+        tbody.innerHTML = '';
+        if (!accounts.length) {
+            tbody.innerHTML = '<tr><td colspan="4">No risky accounts match the current filter.</td></tr>';
+            return;
+        }
+
+        accounts.forEach(account => {
+            const tr = document.createElement('tr');
+            const risks = account.risks.map(risk => `<span class="risk-pill" title="${escapeHtml(risk.evidence)}">${escapeHtml(risk.title)}</span>`).join('');
+            tr.innerHTML = `
+                <td class="account-name">
+                    <strong>${escapeHtml(account.name)}</strong>
+                    <small>${escapeHtml(account.sam || account.upn || `CSV row ${account.row}`)}</small>
+                </td>
+                <td>${account.enabled ? 'Enabled' : 'Disabled'}</td>
+                <td><span class="severity-pill ${account.highest_severity}">${account.highest_severity}</span></td>
+                <td>${risks}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openRiskModal(riskKey) {
+        if (!adScanData) return;
+        const definition = adScanData.risk_definitions[riskKey];
+        const accounts = accountsForRisk(riskKey);
+        if (!definition || !accounts.length) return;
+
+        document.getElementById('riskModalTitle').textContent = definition.title;
+        document.getElementById('riskModalDescription').textContent = definition.description;
+        document.getElementById('riskModalCount').textContent = `${accounts.length} ${accounts.length === 1 ? 'user' : 'users'}`;
+        const severityPill = document.getElementById('riskModalSeverity');
+        severityPill.className = `severity-pill ${definition.severity}`;
+        severityPill.textContent = definition.severity;
+
+        const list = document.getElementById('riskModalAccounts');
+        list.innerHTML = accounts.map(account => {
+            const matchingRisks = account.risks.filter(risk => risk.key === riskKey);
+            const evidence = matchingRisks.map(risk => `<span class="ad-evidence">${escapeHtml(risk.evidence)}</span>`).join('');
+            const spns = account.spns && account.spns.length
+                ? `<span class="ad-evidence">SPN: ${escapeHtml(account.spns.join(', '))}</span>`
+                : '';
+            return `
+                <article class="ad-modal-account">
+                    <div class="account-name">
+                        <strong>${escapeHtml(account.name)}</strong>
+                        <small>${escapeHtml(account.sam || account.upn || `CSV row ${account.row}`)}</small>
+                        <small>${account.enabled ? 'Enabled' : 'Disabled'} &middot; CSV row ${account.row}</small>
+                    </div>
+                    <div class="ad-evidence-list">
+                        ${evidence}
+                        ${riskKey === 'spn_kerberoast' ? spns : ''}
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+        document.getElementById('riskModal').hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function accountsForRisk(riskKey) {
+        return (adScanData?.accounts || []).filter(account => account.risks.some(risk => risk.key === riskKey));
+    }
+
+    function closeRiskModal() {
+        document.getElementById('riskModal').hidden = true;
+        document.body.style.overflow = '';
+    }
+
+    function handleModalBackdrop(event) {
+        if (event.target.id === 'riskModal') {
+            closeRiskModal();
+        }
+    }
+
+    function downloadFindings() {
+        if (!adScanData) return;
+        const rows = [['Account', 'SAM', 'UPN', 'Enabled', 'Highest Severity', 'Risks', 'Evidence']];
+        adScanData.accounts.forEach(account => {
+            rows.push([
+                account.name,
+                account.sam || '',
+                account.upn || '',
+                account.enabled ? 'Enabled' : 'Disabled',
+                account.highest_severity,
+                account.risks.map(r => r.title).join('; '),
+                account.risks.map(r => r.evidence).join('; ')
+            ]);
+        });
+        const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'ad_risk_findings.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    function resetScanner() {
+        adScanData = null;
+        document.getElementById('adCsvFile').value = '';
+        document.getElementById('fileName').textContent = 'Choose AD user CSV';
+        document.getElementById('adResults').style.display = 'none';
+        document.getElementById('severityFilter').value = 'all';
+        document.getElementById('accountSearch').value = '';
+        closeRiskModal();
+        setAlert('');
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[char]));
+    }
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !document.getElementById('riskModal').hidden) {
+            closeRiskModal();
+        }
+    });
+</script>
+{% endblock %}
