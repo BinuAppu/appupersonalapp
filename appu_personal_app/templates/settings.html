@@ -74,7 +74,29 @@
                     <option value="default">Default</option>
                     <option value="dragon">Dragon</option>
                     <option value="central-intelligence">Central Intelligence</option>
+                    <option value="sunrise-pop">Sunrise Pop</option>
+                    <option value="tropical-splash">Tropical Splash</option>
+                    <option value="candy-neon">Candy Neon</option>
+                    <option value="lime-burst">Lime Burst</option>
+                    <option value="ocean-coral">Ocean Coral</option>
                 </select>
+            </div>
+
+            <!-- Background Image -->
+            <div class="setting-item"
+                style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">Background Image</h4>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Upload a JPG or PNG and show it behind the app.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                    <label class="background-toggle">
+                        <input type="checkbox" id="backgroundImageToggle" onchange="saveBackgroundImageSetting(this.checked)">
+                        <span>Show</span>
+                    </label>
+                    <label class="custom-file-upload" for="backgroundImageInput">Choose Image</label>
+                    <input type="file" id="backgroundImageInput" accept="image/png,image/jpeg" style="display: none;" onchange="uploadBackgroundImage(this)">
+                </div>
             </div>
 
             <!-- Font Family -->
@@ -329,8 +351,11 @@
         const savedTheme = localStorage.getItem('theme') || 'light';
         if (savedTheme === 'light') {
             document.getElementById('settingsLightTheme').checked = true;
-        } else {
+        } else if (savedTheme === 'dark') {
             document.getElementById('settingsDarkTheme').checked = true;
+        } else {
+            document.getElementById('settingsLightTheme').checked = false;
+            document.getElementById('settingsDarkTheme').checked = false;
         }
 
         // Load Settings
@@ -355,6 +380,11 @@
                 if (settings && settings.task_alert_days) {
                     document.getElementById('taskAlertDaysSlider').value = settings.task_alert_days;
                     document.getElementById('taskAlertDaysValue').innerText = settings.task_alert_days;
+                }
+                const backgroundToggle = document.getElementById('backgroundImageToggle');
+                if (backgroundToggle && settings) {
+                    backgroundToggle.checked = Boolean(settings.background_image_enabled && settings.background_image_available);
+                    backgroundToggle.disabled = !settings.background_image_available;
                 }
             });
 
@@ -467,6 +497,55 @@
         } catch (e) {
             alert('Error saving settings: ' + e);
             return false;
+        }
+    }
+
+    async function saveBackgroundImageSetting(enabled) {
+        const settingsRes = await fetch('/api/settings');
+        const currentSettings = await settingsRes.json();
+        if (enabled && !currentSettings.background_image_available) {
+            alert('Please choose a background image first.');
+            document.getElementById('backgroundImageToggle').checked = false;
+            return;
+        }
+
+        const settings = {
+            ...currentSettings,
+            background_image_enabled: enabled
+        };
+
+        if (await persistSettings(settings)) {
+            window.applyBackgroundImage(enabled);
+        }
+    }
+
+    async function uploadBackgroundImage(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('background_image', file);
+
+        try {
+            const res = await fetch('/api/settings/background-image', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.error || 'Failed to upload background image.');
+                return;
+            }
+
+            const backgroundToggle = document.getElementById('backgroundImageToggle');
+            backgroundToggle.disabled = false;
+            backgroundToggle.checked = true;
+            window.applyBackgroundImage(true);
+            alert(`Background saved as templates/${data.filename}`);
+        } catch (e) {
+            alert('Error uploading background image: ' + e);
+        } finally {
+            input.value = '';
         }
     }
 
