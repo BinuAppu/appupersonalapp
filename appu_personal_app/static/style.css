@@ -87,6 +87,111 @@
     --active-color: #4ADE80;
 }
 
+[data-theme='sunrise-pop'] {
+    --primary-color: #FF4F8B;
+    --primary-glow: rgba(255, 79, 139, 0.28);
+    --secondary-color: #FFB000;
+    --accent-color: #00B8D9;
+    --success-color: #22C55E;
+    --warning-color: #F97316;
+    --danger-color: #E11D48;
+    --bg-color: #FFF7E8;
+    --text-color: #382033;
+    --text-muted: #8F647A;
+    --card-bg: #FFFFFF;
+    --nav-bg: #FFFDF8;
+    --box-shadow: 0 4px 18px rgba(255, 79, 139, 0.14);
+    --glass-shadow: 0 4px 18px rgba(255, 176, 0, 0.14);
+    --border-color: #FFD6A6;
+    --input-bg: #FFF4DC;
+    --input-border: #FFC56E;
+    --active-color: #FF4F8B;
+}
+
+[data-theme='tropical-splash'] {
+    --primary-color: #00BFA6;
+    --primary-glow: rgba(0, 191, 166, 0.28);
+    --secondary-color: #00A7FF;
+    --accent-color: #FFE156;
+    --success-color: #35D07F;
+    --warning-color: #FFB703;
+    --danger-color: #FF5A5F;
+    --bg-color: #E9FFF9;
+    --text-color: #073B3A;
+    --text-muted: #4F7F7B;
+    --card-bg: #FFFFFF;
+    --nav-bg: #F5FFFC;
+    --box-shadow: 0 4px 18px rgba(0, 167, 255, 0.14);
+    --glass-shadow: 0 4px 18px rgba(0, 191, 166, 0.16);
+    --border-color: #A9F5E7;
+    --input-bg: #F1FFFB;
+    --input-border: #7EE7D5;
+    --active-color: #00BFA6;
+}
+
+[data-theme='candy-neon'] {
+    --primary-color: #D946EF;
+    --primary-glow: rgba(217, 70, 239, 0.28);
+    --secondary-color: #38BDF8;
+    --accent-color: #FB7185;
+    --success-color: #4ADE80;
+    --warning-color: #FDE047;
+    --danger-color: #F43F5E;
+    --bg-color: #FFF0FB;
+    --text-color: #321247;
+    --text-muted: #8B5CA0;
+    --card-bg: #FFFFFF;
+    --nav-bg: #FFF7FD;
+    --box-shadow: 0 4px 18px rgba(217, 70, 239, 0.14);
+    --glass-shadow: 0 4px 18px rgba(56, 189, 248, 0.14);
+    --border-color: #F5C2FF;
+    --input-bg: #FFF6FE;
+    --input-border: #EEA6FF;
+    --active-color: #D946EF;
+}
+
+[data-theme='lime-burst'] {
+    --primary-color: #84CC16;
+    --primary-glow: rgba(132, 204, 22, 0.28);
+    --secondary-color: #FACC15;
+    --accent-color: #14B8A6;
+    --success-color: #22C55E;
+    --warning-color: #F59E0B;
+    --danger-color: #EF4444;
+    --bg-color: #FAFFE6;
+    --text-color: #24310A;
+    --text-muted: #687A34;
+    --card-bg: #FFFFFF;
+    --nav-bg: #FEFFF5;
+    --box-shadow: 0 4px 18px rgba(132, 204, 22, 0.15);
+    --glass-shadow: 0 4px 18px rgba(20, 184, 166, 0.12);
+    --border-color: #D9F99D;
+    --input-bg: #FDFFEF;
+    --input-border: #BEF264;
+    --active-color: #65A30D;
+}
+
+[data-theme='ocean-coral'] {
+    --primary-color: #0EA5E9;
+    --primary-glow: rgba(14, 165, 233, 0.28);
+    --secondary-color: #FF6B6B;
+    --accent-color: #2DD4BF;
+    --success-color: #10B981;
+    --warning-color: #FDBA74;
+    --danger-color: #FB3B52;
+    --bg-color: #EEF9FF;
+    --text-color: #103249;
+    --text-muted: #597B91;
+    --card-bg: #FFFFFF;
+    --nav-bg: #F7FCFF;
+    --box-shadow: 0 4px 18px rgba(14, 165, 233, 0.14);
+    --glass-shadow: 0 4px 18px rgba(255, 107, 107, 0.12);
+    --border-color: #BDEBFF;
+    --input-bg: #F3FBFF;
+    --input-border: #96DEFF;
+    --active-color: #0EA5E9;
+}
+
 
 /* Subtask Tree Line */
 .subtask-tree-line {
@@ -180,6 +285,31 @@
     box-shadow: 0 4px 16px rgba(0,0,0,0.14), 0 8px 22px var(--primary-glow);
 }
 
+.background-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--input-border);
+    border-radius: 999px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.background-toggle input {
+    width: auto;
+    accent-color: var(--primary-color);
+}
+
+.background-toggle:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
 #bulkUploadInput {
     display: none;
 }
@@ -194,6 +324,30 @@ body {
     height: 100vh;
     overflow: hidden;
     transition: background-color 0.3s, color 0.3s;
+}
+
+body.use-background-image {
+    background-image:
+        linear-gradient(rgba(8, 12, 20, 0.42), rgba(8, 12, 20, 0.42)),
+        var(--app-background-image);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+body.use-background-image .topnav {
+    background: color-mix(in srgb, var(--nav-bg) 90%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+body.use-background-image .card,
+body.use-background-image .item-card,
+body.use-background-image .settings-section,
+body.use-background-image .modal-content {
+    background: color-mix(in srgb, var(--card-bg) 88%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
 }
 
 /* ── Top Navigation ── */

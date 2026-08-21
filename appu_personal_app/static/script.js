@@ -71,9 +71,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Theme Logic
+    const colorSchemeThemes = [
+        'dragon',
+        'central-intelligence',
+        'sunrise-pop',
+        'tropical-splash',
+        'candy-neon',
+        'lime-burst',
+        'ocean-coral'
+    ];
+
     window.setTheme = function (theme) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
+        localStorage.setItem('colorScheme', colorSchemeThemes.includes(theme) ? theme : 'default');
 
         // Update Settings Page Inputs if they exist
         const lightRadio = document.getElementById('settingsLightTheme');
@@ -92,8 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (schemeSelect) {
-            const validThemes = ['dragon', 'central-intelligence'];
-            if (validThemes.includes(theme)) {
+            if (colorSchemeThemes.includes(theme)) {
                 schemeSelect.value = theme;
             } else {
                 schemeSelect.value = 'default';
@@ -114,6 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('fontFamily', font);
     }
 
+    window.applyBackgroundImage = function (enabled) {
+        document.body.classList.toggle('use-background-image', Boolean(enabled));
+        if (enabled) {
+            document.body.style.setProperty('--app-background-image', `url('/background-image?v=${Date.now()}')`);
+        } else {
+            document.body.style.removeProperty('--app-background-image');
+        }
+    }
+
     // Init Theme and Font
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -122,6 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedFont) {
         document.body.style.fontFamily = savedFont;
     }
+
+    fetch('/api/settings')
+        .then(res => res.json())
+        .then(settings => {
+            applyBackgroundImage(Boolean(settings.background_image_enabled && settings.background_image_available));
+        })
+        .catch(() => applyBackgroundImage(false));
 
     // Apply card width from localStorage
     const cardSizes = [120, 145, 165, 185, 210, 235, 265, 295, 330, 370];
