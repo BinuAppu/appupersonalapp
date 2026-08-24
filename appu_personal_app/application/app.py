@@ -1289,28 +1289,31 @@ def backup_data():
     try:
         # Use absolute path relative to this file
         app_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(app_dir, '..', 'data')
-        backup_dir = os.path.join(app_dir, '..', 'backup')
-        
+        data_dir = os.path.normpath(os.path.join(app_dir, '..', 'data'))
+        backup_dir = os.path.normpath(os.path.join(app_dir, '..', 'backup'))
+
         if not os.path.exists(backup_dir):
             os.makedirs(backup_dir)
-        
+
+        if not os.path.exists(data_dir):
+            return jsonify({"success": False, "error": "Data directory not found"}), 404
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Files identified from data_manager.py
-        files_to_check = ['data.json', 'knowledgebase.json', 'secure.json', 'username.json']
+
+        # Dynamically back up ALL files in the data/ directory,
+        # regardless of whether they have changed, so no file is ever missed.
         backed_up_files = []
-        
-        for filename in files_to_check:
+        for filename in os.listdir(data_dir):
             src = os.path.join(data_dir, filename)
-            if os.path.exists(src):
-                dst = os.path.join(backup_dir, f"{filename.split('.')[0]}_{timestamp}.json")
+            if os.path.isfile(src):
+                base, ext = os.path.splitext(filename)
+                dst = os.path.join(backup_dir, f"{base}_{timestamp}{ext}")
                 shutil.copy2(src, dst)
                 backed_up_files.append(os.path.basename(dst))
-        
+
         if not backed_up_files:
-            return jsonify({"success": False, "error": "No data files found to backup"}), 404
-            
+            return jsonify({"success": True, "path": backup_dir, "files": [], "message": "Data directory is empty, nothing to backup"})
+
         return jsonify({"success": True, "path": backup_dir, "files": backed_up_files})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
