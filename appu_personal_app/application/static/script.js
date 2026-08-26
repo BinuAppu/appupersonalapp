@@ -1125,16 +1125,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>
                         <div class="action-buttons">
                             <button class="action-btn btn-copy-user" title="Copy Username" onclick="copyToClipboard('${escapeHtml(item.user_id)}')">
-                                <i class="fas fa-user-copy"></i>
+                                <i class="fas fa-user"></i>
                             </button>
                             <button class="action-btn btn-copy-pass" title="Copy Password" onclick="copyToClipboard('${escapeHtml(item.password)}')">
                                 <i class="fas fa-key"></i>
                             </button>
                             <button class="action-btn btn-edit" title="Edit" onclick="openSecureModal('${item.id}')">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-pen-to-square"></i>
                             </button>
                             <button class="action-btn btn-delete" title="Delete" onclick="deleteSecureItem('${item.id}')">
-                                <i class="fas fa-trash"></i>
+                                <i class="fas fa-trash-can"></i>
                             </button>
                         </div>
                     </td>

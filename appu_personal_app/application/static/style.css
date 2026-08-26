@@ -420,6 +420,12 @@ body.use-background-image .modal-content {
     color: #fff;
 }
 
+/* Preserve native emoji color inside nav links */
+.nav-link span[style] {
+    color: initial;
+    -webkit-text-fill-color: initial;
+}
+
 .reminder-flash {
     --ticker-width: clamp(180px, 20vw, 330px);
     flex-shrink: 0;
