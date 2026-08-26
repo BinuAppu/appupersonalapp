@@ -8,6 +8,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&family=Merriweather:wght@300;400;700&family=Montserrat:wght@400;500;600&family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@400;600&family=Poppins:wght@400;500;600&family=Quicksand:wght@400;500;600&family=Raleway:wght@400;500;600&family=Roboto:wght@400;500;700&family=Source+Code+Pro:wght@400;600&family=Ubuntu:wght@400;500;700&family=Work+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -24,7 +25,7 @@
             <a href="/knowledge" class="nav-link {% if request.path == '/knowledge' %}active{% endif %}">🧠 Knowledge</a>
             <a href="/calendar" class="nav-link {% if request.path == '/calendar' %}active{% endif %}">📅 Calendar</a>
             <a href="/secure" class="nav-link {% if request.path == '/secure' %}active{% endif %}">🔒 Secure</a>
-            <a href="/small-apps" class="nav-link {% if request.path == '/small-apps' or request.path.startswith('/small-apps/') %}active{% endif %}">🚀 Tools</a>
+            <a href="/small-apps" class="nav-link {% if request.path == '/small-apps' or request.path.startswith('/small-apps/') %}active{% endif %}"><span style="font-style:normal;">🚀</span> Tools</a>
             <a href="/all" class="nav-link {% if request.path == '/all' %}active{% endif %}">📝 Database</a>
             <a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">⚙️ Settings</a>
         </nav>
