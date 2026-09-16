@@ -129,6 +129,21 @@
         </div>
     </div>
 
+    <div id="regularNoteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRegularNoteModal()">&times;</span>
+            <h2 id="regularNoteModalTitle">New Regular Note</h2>
+            <form id="regularNoteForm" style="margin-top:20px;">
+                <input type="hidden" id="regularNoteId">
+                <div class="input-group"><label for="regularNoteTopic">Topic</label><input type="text" id="regularNoteTopic" required></div>
+                <div class="input-group"><label for="regularNoteSubject">Email Subject</label><input type="text" id="regularNoteSubject" required></div>
+                <div class="input-group"><label for="regularNoteType">Type</label><select id="regularNoteType"><option value="AI" selected>AI</option><option value="Internal AI">Internal AI</option><option value="Internal Apps">Internal Apps</option><option value="External Hosting Apps">External Hosting Apps</option><option value="Others">Others</option></select></div>
+                <div class="input-group"><label for="regularNoteRemarks">Remarks</label><textarea id="regularNoteRemarks" rows="6"></textarea></div>
+                <button type="submit" class="btn">Save Regular Note</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal for Editing -->
     <div id="editModal" class="modal">
         <div class="modal-content">

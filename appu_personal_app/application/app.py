@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory, Response
 import csv
 import io
 import os
@@ -513,7 +513,9 @@ def all_items():
     tasks = data_manager.get_all_tasks()
     kb_items = data_manager.get_kb_items()
     projects = data_manager.get_all_projects()
-    return render_template('list_view.html', reminders=reminders, tasks=tasks, kb_items=kb_items, projects=projects)
+    regular_notes = data_manager.get_regular_notes()
+    return render_template('list_view.html', reminders=reminders, tasks=tasks, kb_items=kb_items,
+                           projects=projects, regular_notes=regular_notes)
 
 @app.route('/calendar')
 def calendar_view():
@@ -609,6 +611,35 @@ def delete_reminder(reminder_id):
 def delete_task(task_id):
     data_manager.delete_task(task_id)
     return jsonify({"success": True})
+
+@app.route('/api/regular-notes', methods=['GET', 'POST'])
+def regular_notes():
+    if request.method == 'GET':
+        return jsonify(data_manager.get_regular_notes())
+    data = request.json or {}
+    topic = str(data.get('topic', '')).strip()
+    email_subject = str(data.get('email_subject', '')).strip()
+    note_type = str(data.get('type', 'AI')).strip() or 'AI'
+    remarks = str(data.get('remarks', ''))
+    if not topic or not email_subject:
+        return jsonify({"error": "Topic and Email Subject are required."}), 400
+    return jsonify(data_manager.add_regular_note(topic, email_subject, note_type, remarks)), 201
+
+@app.route('/api/regular-notes/<note_id>', methods=['PUT', 'DELETE'])
+def regular_note(note_id):
+    if request.method == 'DELETE':
+        return jsonify({"success": data_manager.delete_regular_note(note_id)})
+    data = request.json or {}
+    topic = str(data.get('topic', '')).strip()
+    email_subject = str(data.get('email_subject', '')).strip()
+    note_type = str(data.get('type', 'AI')).strip() or 'AI'
+    remarks = str(data.get('remarks', ''))
+    if not topic or not email_subject:
+        return jsonify({"error": "Topic and Email Subject are required."}), 400
+    updated = data_manager.update_regular_note(note_id, topic, email_subject, note_type, remarks)
+    if not updated:
+        return jsonify({"error": "Regular Note not found."}), 404
+    return jsonify(updated)
 
 # --- Bulk Upload API ---
 
@@ -1459,6 +1490,22 @@ def download_reminders():
         output.getvalue(),
         mimetype="text/csv",
         headers={"Content-disposition": "attachment; filename=reminders_export.csv"}
+    )
+
+@app.route('/api/regular-notes/download')
+def download_regular_notes():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['id', 'topic', 'email_subject', 'type', 'remarks', 'created_at', 'updated_at'])
+    for note in data_manager.get_regular_notes():
+        writer.writerow([
+            note.get('id'), note.get('topic'), note.get('email_subject'), note.get('type'),
+            note.get('remarks', ''), note.get('created_at'), note.get('updated_at')
+        ])
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=regular_notes_export.csv"}
     )
 
 @app.route('/api/tasks/download')

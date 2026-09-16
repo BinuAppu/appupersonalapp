@@ -22,6 +22,10 @@
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             New Project
         </button>
+        <button class="btn btn-accent" onclick="openRegularNoteModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 3h10l4 4v14H5V3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v5h4M8 12h8M8 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Regular Note
+        </button>
     </div>
 </div>
 
@@ -59,6 +63,7 @@
     <button class="tab-btn" id="kbTabBtn" onclick="showTab('kb')">🧠 Knowledge Base ({{ kb_items|length }})</button>
     <button class="tab-btn" id="projectTabBtn" onclick="showTab('projects')">📁 Projects ({{ projects|length
         }})</button>
+    <button class="tab-btn" id="regularNoteTabBtn" onclick="showTab('regular-notes')">📝 Regular Notes ({{ regular_notes|length }})</button>
 </div>
 
 <div id="tasksTab" class="tab-content">
@@ -259,17 +264,55 @@
     </div>
 </div>
 
+<div id="regular-notesTab" class="tab-content" style="display: none;">
+    <div class="card">
+        <div class="filters" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <label>Filter Type:
+                <select id="regularNoteTypeFilter" onchange="filterItems()"><option value="All">All Types</option>
+                    <option>AI</option><option>Internal AI</option><option>Internal Apps</option><option>External Hosting Apps</option><option>Others</option>
+                </select>
+            </label>
+            <label>Sort By:
+                <select id="regularNoteSort" onchange="sortRegularNotes()"><option value="topic">Topic</option><option value="email_subject">Email Subject</option><option value="type">Type</option><option value="updated_at">Recently Updated</option></select>
+            </label>
+            <a href="/api/regular-notes/download" class="btn btn-accent">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4v12m0 0l5-5m-5 5l-5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Export CSV
+            </a>
+        </div>
+        <div style="overflow-x:auto; margin-top:12px;">
+            <table style="width:100%; table-layout:fixed; text-align:left; border-collapse:collapse;">
+                <colgroup><col style="width:18%;"><col style="width:22%;"><col style="width:18%;"><col style="width:30%;"><col style="width:12%;"></colgroup>
+                <thead><tr style="border-bottom:2px solid var(--border-color);"><th style="padding:12px;">Topic</th><th style="padding:12px;">Email Subject</th><th style="padding:12px;">Type</th><th style="padding:12px;">Remarks</th><th style="padding:12px;">Actions</th></tr></thead>
+                <tbody id="regularNoteTable">
+                {% for note in regular_notes %}
+                    <tr style="height:72px; border-bottom:1px solid var(--border-color);" data-type="{{ note.type }}" data-topic="{{ note.topic|lower }}" data-email-subject="{{ note.email_subject|lower }}" data-updated-at="{{ note.updated_at }}">
+                        <td style="height:72px; padding:12px; font-weight:600; vertical-align:top;"><div style="height:48px; overflow:hidden; overflow-wrap:anywhere; word-break:break-word;">{{ note.topic }}</div></td>
+                        <td style="height:72px; padding:12px; vertical-align:top;"><div style="height:48px; overflow:hidden; overflow-wrap:anywhere; word-break:break-word;">{{ note.email_subject }}</div></td>
+                        <td style="height:72px; padding:12px; vertical-align:top;"><div style="height:48px; overflow:hidden; overflow-wrap:anywhere; word-break:break-word;">{{ note.type }}</div></td>
+                        <td style="height:72px; padding:12px; vertical-align:top;"><div style="height:48px; overflow-y:auto; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;">{{ note.remarks }}</div></td>
+                        <td style="height:72px; padding:12px; vertical-align:top; white-space:normal;"><button class="table-action-btn" onclick="openRegularNoteModal('{{ note.id }}')">Edit</button> <button class="table-action-btn table-action-danger" onclick="deleteRegularNote('{{ note.id }}')">Delete</button></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <script>
     window.showTab = function (tab) {
         document.getElementById('tasksTab').style.display = tab === 'tasks' ? 'block' : 'none';
         document.getElementById('remindersTab').style.display = tab === 'reminders' ? 'block' : 'none';
         document.getElementById('kbTab').style.display = tab === 'kb' ? 'block' : 'none';
         document.getElementById('projectsTab').style.display = tab === 'projects' ? 'block' : 'none';
+        document.getElementById('regular-notesTab').style.display = tab === 'regular-notes' ? 'block' : 'none';
 
         document.getElementById('taskTabBtn').classList.toggle('active', tab === 'tasks');
         document.getElementById('reminderTabBtn').classList.toggle('active', tab === 'reminders');
         document.getElementById('kbTabBtn').classList.toggle('active', tab === 'kb');
         document.getElementById('projectTabBtn').classList.toggle('active', tab === 'projects');
+        document.getElementById('regularNoteTabBtn').classList.toggle('active', tab === 'regular-notes');
 
         // Save the active tab
         localStorage.setItem('activeTab', tab);
@@ -345,6 +388,28 @@
             display.textContent = "No file chosen";
             display.style.color = "var(--text-muted)";
         }
+
+        const regularNoteFilter = document.getElementById("regularNoteTypeFilter")?.value || "All";
+        const regularNoteTable = document.getElementById("regularNoteTable");
+        if (regularNoteTable) {
+            Array.from(regularNoteTable.rows).forEach(row => {
+                const matchesSearch = row.textContent.toUpperCase().indexOf(searchFilter) > -1;
+                const matchesType = regularNoteFilter === "All" || row.dataset.type === regularNoteFilter;
+                row.style.display = (matchesSearch && matchesType) ? "" : "none";
+            });
+        }
     }
+
+    window.sortRegularNotes = function () {
+        const table = document.getElementById('regularNoteTable');
+        const sortBy = document.getElementById('regularNoteSort')?.value || 'topic';
+        if (!table) return;
+        const key = sortBy.replace('_', '-');
+        Array.from(table.rows).sort((a, b) => {
+            const av = a.dataset[key] || '';
+            const bv = b.dataset[key] || '';
+            return sortBy === 'updated_at' ? bv.localeCompare(av) : av.localeCompare(bv);
+        }).forEach(row => table.appendChild(row));
+    };
 </script>
 {% endblock %}

@@ -2050,3 +2050,58 @@ function handleItemDrop(e) {
     draggedType = null;
     return false;
 }
+
+// --- Regular Notes ---
+window.openRegularNoteModal = async function (id = null) {
+    const modal = document.getElementById('regularNoteModal');
+    if (!modal) return;
+    document.getElementById('regularNoteModalTitle').textContent = id ? 'Edit Regular Note' : 'New Regular Note';
+    document.getElementById('regularNoteForm').reset();
+    document.getElementById('regularNoteId').value = id || '';
+    document.getElementById('regularNoteType').value = 'AI';
+    if (id) {
+        const response = await fetch('/api/regular-notes');
+        const note = (await response.json()).find(item => item.id === id);
+        if (note) {
+            document.getElementById('regularNoteTopic').value = note.topic;
+            document.getElementById('regularNoteSubject').value = note.email_subject;
+            document.getElementById('regularNoteType').value = note.type;
+            document.getElementById('regularNoteRemarks').value = note.remarks || '';
+        }
+    }
+    modal.style.display = 'block';
+};
+
+window.closeRegularNoteModal = function () {
+    const modal = document.getElementById('regularNoteModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.deleteRegularNote = async function (id) {
+    if (!confirm('Are you sure you want to delete this Regular Note?')) return;
+    const response = await fetch(`/api/regular-notes/${id}`, { method: 'DELETE' });
+    if (response.ok) window.location.reload();
+};
+
+document.getElementById('regularNoteForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const id = document.getElementById('regularNoteId').value;
+    const payload = {
+        topic: document.getElementById('regularNoteTopic').value,
+        email_subject: document.getElementById('regularNoteSubject').value,
+        type: document.getElementById('regularNoteType').value,
+        remarks: document.getElementById('regularNoteRemarks').value
+    };
+    const response = await fetch(id ? `/api/regular-notes/${id}` : '/api/regular-notes', {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (response.ok) {
+        closeRegularNoteModal();
+        window.location.reload();
+    } else {
+        const result = await response.json().catch(() => ({}));
+        alert(result.error || 'Failed to save Regular Note.');
+    }
+});

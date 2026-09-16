@@ -14,6 +14,7 @@ KB_FILE = os.path.join(DATA_DIR, "knowledgebase.json")
 SECURE_FILE = os.path.join(DATA_DIR, "secure.json")
 USERNAME_FILE = os.path.join(DATA_DIR, "username.json")
 PROJECT_FILE = os.path.join(DATA_DIR, "project.json")
+REGULAR_NOTE_FILE = os.path.join(DATA_DIR, "regularnote.json")
 SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
 
 class DataManager:
@@ -375,6 +376,51 @@ class DataManager:
         kb_data = [item for item in kb_data if item["id"] != kb_id]
         self.save_kb(kb_data)
         return True
+
+    # --- Regular Notes ---
+    def load_regular_notes(self):
+        if not os.path.exists(REGULAR_NOTE_FILE):
+            return []
+        try:
+            with open(REGULAR_NOTE_FILE, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return []
+
+    def save_regular_notes(self, notes):
+        os.makedirs(DATA_DIR, exist_ok=True)
+        with open(REGULAR_NOTE_FILE, 'w') as f:
+            json.dump(notes, f, indent=4)
+
+    def get_regular_notes(self):
+        return self.load_regular_notes()
+
+    def add_regular_note(self, topic, email_subject, note_type, remarks):
+        notes = self.load_regular_notes()
+        note = {
+            "id": str(uuid.uuid4()), "topic": topic, "email_subject": email_subject,
+            "type": note_type, "remarks": remarks,
+            "created_at": datetime.now().isoformat(), "updated_at": datetime.now().isoformat()
+        }
+        notes.append(note)
+        self.save_regular_notes(notes)
+        return note
+
+    def update_regular_note(self, note_id, topic, email_subject, note_type, remarks):
+        notes = self.load_regular_notes()
+        for note in notes:
+            if note["id"] == note_id:
+                note.update({"topic": topic, "email_subject": email_subject, "type": note_type,
+                             "remarks": remarks, "updated_at": datetime.now().isoformat()})
+                self.save_regular_notes(notes)
+                return note
+        return None
+
+    def delete_regular_note(self, note_id):
+        notes = self.load_regular_notes()
+        filtered = [note for note in notes if note["id"] != note_id]
+        self.save_regular_notes(filtered)
+        return len(filtered) != len(notes)
 
     def search_kb_items(self, query):
         kb_data = self.load_kb()
