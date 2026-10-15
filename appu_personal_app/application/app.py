@@ -844,6 +844,10 @@ def generate_otp():
 def dns_resolver():
     return render_template('dns_resolver.html')
 
+@app.route('/small-apps/ip-calculator')
+def ip_calculator():
+    return render_template('ip_calculator.html')
+
 @app.route('/api/dns/resolve', methods=['POST'])
 def resolve_dns():
     import dns.resolver
