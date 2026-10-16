@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container ip-tool-container">
+    <div class="ip-back-link"><a href="/small-apps">← Back to Tools</a></div>
+    <div class="ip-hero">
+        <div class="ip-hero-icon">🧮</div>
+        <div>
+            <p class="ip-eyebrow">NETWORKING TOOL</p>
+            <h1>IP Subnet Calculator</h1>
+            <p>Explore IPv4 address space, split networks, and find the smallest aggregate route.</p>
+        </div>
+    </div>
+
+    <div class="ip-tabs" role="tablist">
+        <button class="ip-tab active" data-tab="details" role="tab">Address details</button>
+        <button class="ip-tab" data-tab="subnet" role="tab">Subnet a network</button>
+        <button class="ip-tab" data-tab="supernet" role="tab">Supernet / aggregate</button>
+    </div>
+
+    <section class="ip-panel ip-panel-active" id="details-panel">
+        <div class="ip-form-row">
+            <div class="ip-field ip-field-grow">
+                <label for="details-input">IPv4 address or CIDR</label>
+                <input id="details-input" value="192.168.1.10/24" placeholder="e.g. 10.20.0.0/16" autocomplete="off">
+                <span class="ip-hint">A host address is fine — the network address will be calculated for you.</span>
+            </div>
+            <button class="ip-primary" id="details-btn">Calculate details</button>
+        </div>
+        <div id="details-result" class="ip-result" hidden></div>
+    </section>
+
+    <section class="ip-panel" id="subnet-panel" hidden>
+        <div class="ip-form-row ip-subnet-controls">
+            <div class="ip-field ip-field-grow">
+                <label for="subnet-input">Network to split</label>
+                <input id="subnet-input" value="192.168.1.0/24" placeholder="e.g. 10.0.0.0/16" autocomplete="off">
+            </div>
+            <div class="ip-field ip-prefix-field">
+                <label for="subnet-prefix">New prefix</label>
+                <select id="subnet-prefix"></select>
+            </div>
+            <button class="ip-primary" id="subnet-btn">Split network</button>
+        </div>
+        <p class="ip-hint">A longer prefix creates smaller networks. For example, /24 → /26 creates four equal subnets.</p>
+        <div id="subnet-result" class="ip-result" hidden></div>
+    </section>
+
+    <section class="ip-panel" id="supernet-panel" hidden>
+        <div class="ip-field">
+            <label for="supernet-input">Networks to aggregate</label>
+            <textarea id="supernet-input" rows="4" placeholder="192.168.0.0/24&#10;192.168.1.0/24&#10;192.168.2.0/24&#10;192.168.3.0/24">192.168.0.0/24
+192.168.1.0/24
+192.168.2.0/24
+192.168.3.0/24</textarea>
+            <span class="ip-hint">Enter one CIDR per line or separate them with commas. Networks must be IPv4 and contiguous for a clean aggregate.</span>
+        </div>
+        <button class="ip-primary" id="supernet-btn">Find aggregate</button>
+        <div id="supernet-result" class="ip-result" hidden></div>
+    </section>
+
+    <div class="ip-note"><span>💡</span><span><strong>Router IP convention:</strong> this tool labels the first usable address as the router/default gateway. In a real network, confirm the convention used by your administrator.</span></div>
+</div>
+
+<style>
+    .ip-tool-container { max-width: 1120px; margin: 0 auto; padding: 2rem; color: var(--text-color); }
+    .ip-back-link { margin-bottom: 1.5rem; } .ip-back-link a { color: var(--text-muted); text-decoration: none; } .ip-back-link a:hover { color: var(--primary-color); }
+    .ip-hero { display:flex; align-items:center; gap:1.25rem; margin-bottom:1.75rem; } .ip-hero-icon { width:68px; height:68px; display:grid; place-items:center; font-size:2rem; border-radius:18px; background:linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 16%, var(--card-bg)), color-mix(in srgb, var(--accent-color) 16%, var(--card-bg))); } .ip-eyebrow { color:var(--primary-color); font-size:.73rem; letter-spacing:.14em; font-weight:700; margin:0 0 .25rem; } .ip-hero h1 { margin:0 0 .3rem; font-size:2rem; } .ip-hero p:last-child { margin:0; color:var(--text-muted); }
+    .ip-tabs { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; border-bottom:1px solid var(--border-color); } .ip-tab { border:0; background:transparent; color:var(--text-muted); cursor:pointer; padding:.85rem 1rem; font-weight:700; border-bottom:3px solid transparent; } .ip-tab.active { color:var(--primary-color); border-bottom-color:var(--primary-color); }
+    .ip-panel { background:var(--card-bg); border:1px solid var(--border-color); border-radius:18px; padding:1.5rem; box-shadow:var(--box-shadow); } .ip-form-row { display:flex; align-items:end; gap:1rem; } .ip-field { display:flex; flex-direction:column; gap:.45rem; margin-bottom:1rem; } .ip-field-grow { flex:1; } .ip-prefix-field { width:160px; } .ip-field label { font-weight:700; font-size:.9rem; } .ip-field input, .ip-field select, .ip-field textarea { width:100%; box-sizing:border-box; border:1px solid var(--input-border); border-radius:10px; background:var(--input-bg); color:var(--text-color); padding:.78rem .9rem; font:inherit; } .ip-field textarea { resize:vertical; line-height:1.5; } .ip-field input:focus, .ip-field select:focus, .ip-field textarea:focus { outline:none; border-color:var(--primary-color); box-shadow:0 0 0 3px var(--primary-glow); } .ip-hint { display:block; color:var(--text-muted); font-size:.82rem; line-height:1.45; }
+    .ip-primary { background:var(--primary-color); color:white; border:0; border-radius:10px; padding:.8rem 1.15rem; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; margin-bottom:1rem; } .ip-primary:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .ip-result { margin-top:1.25rem; } .ip-error { padding:.85rem 1rem; border-radius:10px; background:color-mix(in srgb, var(--danger-color) 12%, var(--card-bg)); color:var(--danger-color); font-weight:600; } .ip-summary { display:flex; flex-wrap:wrap; gap:.65rem; margin-bottom:1rem; } .ip-pill { padding:.55rem .75rem; border:1px solid var(--border-color); border-radius:10px; background:var(--input-bg); } .ip-pill small { display:block; color:var(--text-muted); font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.15rem; } .ip-pill strong { font-family:'Source Code Pro',monospace; font-size:.9rem; }
+    .ip-details-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:.75rem; } .ip-detail { border:1px solid var(--border-color); border-radius:12px; padding:.9rem; } .ip-detail small { color:var(--text-muted); display:block; margin-bottom:.35rem; } .ip-detail strong { font-family:'Source Code Pro',monospace; word-break:break-word; } .ip-detail em { display:block; color:var(--text-muted); font-size:.75rem; margin-top:.3rem; font-style:normal; }
+    .ip-table-wrap { overflow:auto; border:1px solid var(--border-color); border-radius:12px; } .ip-table { border-collapse:collapse; width:100%; min-width:650px; } .ip-table th, .ip-table td { text-align:left; padding:.75rem .85rem; border-bottom:1px solid var(--border-color); } .ip-table th { color:var(--text-muted); font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; background:var(--input-bg); } .ip-table tr:last-child td { border-bottom:0; } .ip-table code { font-family:'Source Code Pro',monospace; }
+    .ip-section-title { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin:0 0 .75rem; } .ip-section-title h3 { margin:0; font-size:1.05rem; } .ip-muted { color:var(--text-muted); font-size:.85rem; }
+    .ip-note { display:flex; gap:.65rem; margin-top:1rem; padding:1rem; border-radius:12px; background:color-mix(in srgb, var(--accent-color) 10%, var(--card-bg)); color:var(--text-muted); font-size:.86rem; line-height:1.5; }
+    @media (max-width:700px) { .ip-tool-container { padding:1rem; } .ip-hero h1 { font-size:1.55rem; } .ip-form-row { flex-direction:column; align-items:stretch; gap:0; } .ip-prefix-field { width:auto; } .ip-primary { width:100%; } .ip-details-grid { grid-template-columns:1fr; } }
+</style>
+
+<script>
+(() => {
+    const $ = id => document.getElementById(id);
+    const toIp = n => [24n,16n,8n,0n].map(s => Number((n >> BigInt(s)) & 255n)).join('.');
+    const ipToInt = value => { const p = value.trim().split('.'); if (p.length !== 4 || p.some(x => !/^\d+$/.test(x) || Number(x) > 255)) throw Error('Enter a valid IPv4 address.'); return p.reduce((n, x) => (n << 8n) + BigInt(x), 0n); };
+    const parseCidr = value => { const bits = value.trim().split('/'); if (bits.length > 2 || !bits[0]) throw Error('Enter an IPv4 address or CIDR, for example 192.168.1.0/24.'); const prefix = bits.length === 1 ? 32 : Number(bits[1]); if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) throw Error('The prefix must be between /0 and /32.'); const ip = ipToInt(bits[0]); const mask = prefix === 0 ? 0n : (0xffffffffn << BigInt(32 - prefix)) & 0xffffffffn; const network = ip & mask; const broadcast = network | (0xffffffffn ^ mask); return { ip, prefix, mask, network, broadcast, total: broadcast - network + 1n }; };
+    const fmt = n => n.toString();
+    const showError = (el, msg) => { el.hidden = false; el.innerHTML = `<div class="ip-error">${msg}</div>`; };
+    const detailsHtml = c => { const pointToPoint = c.prefix === 31; const hostRoute = c.prefix === 32; const usable = pointToPoint ? 2n : hostRoute ? 1n : c.total > 2n ? c.total - 2n : 0n; const first = pointToPoint || hostRoute ? c.network : c.total > 2n ? c.network + 1n : null; const last = pointToPoint ? c.broadcast : hostRoute ? c.network : c.total > 2n ? c.broadcast - 1n : null; const mask = toIp(c.mask); const wild = toIp(0xffffffffn ^ c.mask); const broadcastLabel = pointToPoint ? 'Broadcast IP' : hostRoute ? 'Broadcast IP' : 'Broadcast IP'; const broadcastValue = pointToPoint ? 'N/A (/31)' : hostRoute ? 'N/A (/32)' : toIp(c.broadcast); const broadcastNote = pointToPoint ? 'Both addresses are usable' : hostRoute ? 'Single-address route' : 'Last address in the subnet'; return `<div class="ip-summary"><div class="ip-pill"><small>Network / CIDR</small><strong>${toIp(c.network)}/${c.prefix}</strong></div><div class="ip-pill"><small>Addresses</small><strong>${fmt(c.total)}</strong></div><div class="ip-pill"><small>Usable hosts</small><strong>${fmt(usable)}</strong></div></div><div class="ip-details-grid"><div class="ip-detail"><small>Input address</small><strong>${toIp(c.ip)}</strong><em>Host portion is normalized below</em></div><div class="ip-detail"><small>Subnet mask</small><strong>${mask}</strong><em>Wildcard: ${wild}</em></div><div class="ip-detail"><small>${broadcastLabel}</small><strong>${broadcastValue}</strong><em>${broadcastNote}</em></div><div class="ip-detail"><small>Router / gateway (convention)</small><strong>${first === null ? '—' : toIp(first)}</strong><em>${pointToPoint ? 'First address; both are usable' : hostRoute ? 'The single address' : 'Often the first usable address'}</em></div><div class="ip-detail"><small>Last usable IP</small><strong>${last === null ? '—' : toIp(last)}</strong><em>${pointToPoint ? 'Second point-to-point address' : hostRoute ? 'The single address' : 'Last assignable host'}</em></div><div class="ip-detail"><small>Address type</small><strong>${hostRoute ? 'Host route' : pointToPoint ? 'Point-to-point' : 'Subnet'}</strong><em>${pointToPoint ? 'RFC 3021: both addresses usable' : hostRoute ? 'Single address' : 'Network + host range'}</em></div></div>`; };
+    const calculateDetails = () => { const out = $('details-result'); try { out.innerHTML = detailsHtml(parseCidr($('details-input').value)); out.hidden = false; } catch (e) { showError(out, e.message); } };
+    $('details-btn').onclick = calculateDetails; $('details-input').onkeydown = e => { if (e.key === 'Enter') calculateDetails(); };
+
+    const select = $('subnet-prefix'); for (let p = 0; p <= 32; p++) { const o = document.createElement('option'); o.value = p; o.textContent = `/${p}`; select.appendChild(o); } select.value = 26;
+    $('subnet-btn').onclick = () => { const out = $('subnet-result'); try { const base = parseCidr($('subnet-input').value); const prefix = Number(select.value); if (prefix < base.prefix) throw Error(`New prefix must be /${base.prefix} or longer.`); const count = 1n << BigInt(prefix - base.prefix); if (count > 4096n) throw Error('That would create more than 4,096 rows. Choose a shorter new prefix.'); const size = 1n << BigInt(32 - prefix); let rows = ''; for (let i = 0n; i < count; i++) { const n = base.network + i * size; const b = n + size - 1n; const usable = size > 2n ? `${toIp(n + 1n)} – ${toIp(b - 1n)}` : '—'; rows += `<tr><td>${i + 1n}</td><td><code>${toIp(n)}/${prefix}</code></td><td><code>${toIp(n)}</code></td><td><code>${toIp(b)}</code></td><td><code>${usable}</code></td></tr>`; } out.hidden = false; out.innerHTML = `<div class="ip-summary"><div class="ip-pill"><small>Parent network</small><strong>${toIp(base.network)}/${base.prefix}</strong></div><div class="ip-pill"><small>Subnets created</small><strong>${count}</strong></div><div class="ip-pill"><small>Addresses each</small><strong>${size}</strong></div></div><div class="ip-table-wrap"><table class="ip-table"><thead><tr><th>#</th><th>Subnet</th><th>Network</th><th>Broadcast</th><th>Usable host range</th></tr></thead><tbody>${rows}</tbody></table></div>`; } catch (e) { showError(out, e.message); } };
+
+    $('supernet-btn').onclick = () => { const out = $('supernet-result'); try { const values = $('supernet-input').value.split(/[\n,]+/).map(x => x.trim()).filter(Boolean); if (values.length < 2) throw Error('Enter at least two networks to aggregate.'); const cs = values.map(parseCidr); const min = cs.reduce((a, c) => c.network < a ? c.network : a, cs[0].network); const max = cs.reduce((a, c) => c.broadcast > a ? c.broadcast : a, cs[0].broadcast); let prefix = 0; while (prefix < 32 && ((min >> BigInt(31 - prefix)) & 1n) === ((max >> BigInt(31 - prefix)) & 1n)) prefix++; const mask = prefix === 0 ? 0n : (0xffffffffn << BigInt(32 - prefix)) & 0xffffffffn; const aggregate = min & mask; const exact = aggregate <= min && (aggregate | (0xffffffffn ^ mask)) >= max; if (!exact) throw Error('These networks cannot be represented by one aggregate.'); const span = (aggregate | (0xffffffffn ^ mask)) - aggregate + 1n; out.hidden = false; out.innerHTML = `<div class="ip-summary"><div class="ip-pill"><small>Aggregate route</small><strong>${toIp(aggregate)}/${prefix}</strong></div><div class="ip-pill"><small>Addresses covered</small><strong>${span}</strong></div><div class="ip-pill"><small>Networks entered</small><strong>${cs.length}</strong></div></div><div class="ip-details-grid"><div class="ip-detail"><small>Aggregate network</small><strong>${toIp(aggregate)}</strong></div><div class="ip-detail"><small>Aggregate broadcast</small><strong>${toIp(aggregate | (0xffffffffn ^ mask))}</strong></div><div class="ip-detail"><small>Subnet mask</small><strong>${toIp(mask)}</strong></div></div><p class="ip-muted" style="margin:.9rem 0 0">The route above is the smallest single CIDR block that covers the entered networks. Check that it does not also include unwanted address space.</p>`; } catch (e) { showError(out, e.message); } };
+
+    document.querySelectorAll('.ip-tab').forEach(tab => tab.onclick = () => { document.querySelectorAll('.ip-tab').forEach(x => x.classList.toggle('active', x === tab)); document.querySelectorAll('.ip-panel').forEach(x => { const active = x.id === `${tab.dataset.tab}-panel`; x.hidden = !active; x.classList.toggle('ip-panel-active', active); }); });
+    calculateDetails();
+})();
+</script>
+{% endblock %}
